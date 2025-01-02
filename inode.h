@@ -9,12 +9,12 @@
 //Inode 存Metadata
 typedef struct {
     int inode_index;                              // Inode編號
-    bool isFile                                   // 是檔案還是資料夾
+    bool isFile;                                  // 是檔案還是資料夾
     bool isUsed;                                  // 是否正在使用
     int size;                                     // 檔案大小
-    int directBlocks[DIRECT_BLOCKS];              // 直接指向的數據塊
-    int indirectBlock[DIRECT_BLOCKS];             // 間接指向的數據塊
-    int doubleIndirectBlock[DIRECT_BLOCKS];       // 雙重間接指向的數據塊
+    int directBlocks[BLOCK_NUMBER];              // 直接指向的Block
+    int indirectBlock[BLOCK_NUMBER];             // 間接指向的Block
+    int doubleIndirectBlock[BLOCK_NUMBER];       // 雙重間接指向的Block
 } Inode;
 
 //只有資料夾有的字典 Key為文件名 value為Inode索引 用來維護資料夾上下級
