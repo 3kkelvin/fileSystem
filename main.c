@@ -19,7 +19,7 @@ int main() {
         //call初始化func 分配空間、建立特殊資訊、分配node
         //call真的作業系統func
     } else {
-        printf('input error\n');
+        printf("input error\n");
         return;
     }
 
