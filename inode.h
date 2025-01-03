@@ -35,8 +35,6 @@ typedef struct {
     int free_space;     // 剩餘空間
 } SuperBlock;
 
-// 初始化文件系統
-void init_filesystem(int partition_size);
-// 顯示文件系統狀態
-void status();
+//初始化一個root
+void init_root(FileSystem* fs);
 #endif

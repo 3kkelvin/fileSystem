@@ -1,12 +1,15 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include "inode.h"
+#include "space.h"
+
 int main() {
     int main_options, partition_size;
     unsigned char *file_system;
 
     printf("options:\n");
     printf(" 1. loads from file\n");
-    printf("  2. create new partition in memory\n");
+    printf(" 2. create new partition in memory\n");
     scanf("%d", &main_options);
     if(main_options == 1) {
         //給明憲做dumpfile的讀寫
@@ -15,11 +18,16 @@ int main() {
         //分配空間
         printf("Input size of a new partition (example 102400)\n");
         scanf("%d", &partition_size);
+        //加一點輸入檢查 至少要超過某個最小值 不要超過某個最大值 取整
         printf("partition size = %d\n", partition_size);
-        //call初始化func 分配空間、建立特殊資訊、分配node
+        FileSystem *file_system; 
+        file_system = init_space(partition_size);//call初始化func 分配空間、建立特殊資訊、分配node
+        //建立Root 
+
+
         //call真的作業系統func
     } else {
-        printf("input error\n");
+        printf('input error\n');
         return;
     }
 
@@ -58,10 +66,12 @@ void print_command() {//列出指令
     printf('\n');
 }
 
-int Interaction(unsigned char *file_system) {
+int Interaction(FileSystem *file_system) {
     bool loop_flag = true;
     char input[256];
     //首先初始化一個Inode current_path指向root
+    Inode *current_path;
+    current_path = 0;//root 也就是buffer的address+block size
 
     while (loop_flag) {
         print_command();
@@ -118,7 +128,7 @@ int Interaction(unsigned char *file_system) {
                 //檢查current_path的Directory 如果有找到 調用珞昱的方法
                 break;
             case 10:
-                //status();
+                status(file_system->super_block);
                 //列出當前超級block內容
                 break;
             case 11:
@@ -136,4 +146,15 @@ int Interaction(unsigned char *file_system) {
     }
 
     return 0;
+}
+
+void status(SuperBlock *status) {
+    printf("partition size:%d\n",status->partition_size);
+    printf("total inodes:%d\n",status->total_inodes);
+    printf("used inodes:%d\n",status->used_inodes);
+    printf("total blocks:%d\n",status->total_blocks);
+    printf("used blocks:%d\n",status->used_blocks);
+    printf("files blocks:%d\n",status->files_blocks);
+    printf("block size:%d\n",status->block_size);
+    printf("free space:%d\n",status->free_space);
 }
