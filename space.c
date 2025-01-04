@@ -45,10 +45,11 @@ FileSystem* init_space(int partition_size) {
     // 7. 初始化 SuperBlock
     fs->super_block->partition_size = partition_size;
     fs->super_block->total_blocks = total_blocks;
-    fs->super_block->used_blocks = metadata_blocks + inode_blocks;  // 系統佔用的區塊
-    fs->super_block->block_size = BLOCK_SIZE;
+    fs->super_block->system_blocks = metadata_blocks + inode_blocks;    // 系統區域占用的blocks
     fs->super_block->total_inodes = total_inodes;
     fs->super_block->used_inodes = 0;
+    fs->super_block->block_size = BLOCK_SIZE;
+    fs->super_block->used_blocks = metadata_blocks + inode_blocks;  // 系統佔用的區塊
     // 設定解密識別字元
     strncpy(fs->super_block->password, "mmslab406", sizeof(fs->super_block->password) - 1);
     fs->super_block->password[sizeof(fs->super_block->password) - 1] = '\0';
@@ -91,24 +92,31 @@ Inode* allocate_inode(FileSystem* fs, bool isFile) {
     return NULL;  // 沒有空閒inode
 }
 
-
-
 int allocate_data_block(FileSystem* fs) {
+    // 計算可用於數據的總blocks
+    int available_blocks = fs->super_block->total_blocks - fs->super_block->used_blocks;
+    
+    // 檢查是否還有可用空間
+    if (available_blocks <= 0) {
+        return -1;
+    }
+
+    int data_blocks = fs->super_block->total_blocks - fs->super_block->system_blocks;
+
     // 遍歷 data bitmap 找尋空閒的 block
-    int data_blocks = fs->super_block->total_blocks - 
-                     (fs->super_block->used_blocks - fs->super_block->files_blocks);
-                     
     for (int i = 0; i < data_blocks; i++) {
         int byte_index = i / 8;
         int bit_index = i % 8;
         
         if (!(fs->data_bitmap[byte_index] & (1 << bit_index))) {
+            // 標記為已使用
             fs->data_bitmap[byte_index] |= (1 << bit_index);
-            fs->super_block->files_blocks++;
-            fs->super_block->free_space -= BLOCK_SIZE;
+            // 更新已使用block計數
+            fs->super_block->used_blocks++;
             return i;
         }
     }
+    
     return -1;  // 沒有空閒的 data block
 }
 
