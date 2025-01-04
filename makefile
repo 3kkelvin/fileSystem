@@ -1,5 +1,5 @@
 CC = gcc
-OBJ = dump.o main.o space.o inode.o
+OBJ = dump.o main.o space.o inode.o command.o
 
 EXE = run
 all: $(EXE)

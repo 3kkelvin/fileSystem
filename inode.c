@@ -9,7 +9,6 @@ void init_root(FileSystem* fs) {
     int block_index = allocate_single_block_for_inode(fs, root);//分配block
     DirectoryEntry root_directory = { ".", root->inode_index};//新建指向自己的key-value
     write_directory_entry(fs, block_index, &root_directory);
-
 }
 //負責寫入key-value 返回到底存在哪個block
 int write_directory_entry(FileSystem* fs, int current_block_index, DirectoryEntry* new_entry) {//負責寫入key-value
@@ -19,7 +18,8 @@ int write_directory_entry(FileSystem* fs, int current_block_index, DirectoryEntr
     size_t offset = 0;
     while (offset + DirectoryEntrySize <= BLOCK_SIZE) {//如果空間還夠 檢查指向的key-value位址  
         DirectoryEntry* existing_entry = (DirectoryEntry*)(block_address + offset);
-        if (existing_entry->inode_index == 0) {//如果為空 寫入
+        bool self_or_father = (strcmp(existing_entry->filename, ".") == 0 || strcmp(existing_entry->filename, "..") == 0);//自己或父路徑 有可能指向root(0) 所以要建立特例
+        if (!self_or_father && existing_entry->inode_index == 0) {//如果為空 寫入
             memcpy(existing_entry, new_entry, DirectoryEntrySize);
             return current_block_index;
         }

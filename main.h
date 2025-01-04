@@ -35,12 +35,7 @@ PathResult parse_path(const char *arg);
 
 //各項指令
 
-//列出指令
-void print_command(void);
-//指令轉
-int get_command_code(const char *input);
 
-//顯示目前fs資訊
-void status(SuperBlock *status);
+
 
 #endif
