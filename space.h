@@ -32,6 +32,15 @@ int allocate_single_block_for_inode(FileSystem* fs, Inode* inode);
 // 取得一個data block的位置
 unsigned char* get_block_position(FileSystem* fs, int block_index);
 
+// 分配一個新的int array block，並初始化為-1
+int allocate_empty_int_array_block(FileSystem* fs);
+
+// 分配一個新的data block，並設置到direct block中
+int allocate_data_block_for_direct_block(FileSystem* fs, int* directBlocks, int size);
+
+// 分配一個新的data block，並設置到indirect block中
+int allocate_data_block_for_indirect_block(FileSystem* fs, int* indirectBlock, int size)
+
 // // 釋放一個數據塊
 // void free_block(FileSystem* fs, int block_number);
 

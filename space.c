@@ -113,6 +113,9 @@ int allocate_data_block(FileSystem* fs) {
             fs->data_bitmap[byte_index] |= (1 << bit_index);
             // 更新已使用block計數
             fs->super_block->used_blocks++;
+            // 清空這個block（全部設為0）
+            unsigned char* block_ptr = get_block_position(fs, i);
+            memset(block_ptr, 0, BLOCK_SIZE);
             return i;
         }
     }
@@ -122,20 +125,17 @@ int allocate_data_block(FileSystem* fs) {
 
 int allocate_single_block_for_inode(FileSystem* fs, Inode* inode) {
     // 1. 先檢查 direct blocks
-    for (int i = 0; i < BLOCK_NUMBER; i++) {
-        if (inode->directBlocks[i] == -1) {
-            // 找到空的 direct block slot，分配新的 block
-            int new_block = allocate_data_block(fs);
-            if (new_block != -1) {
-                inode->directBlocks[i] = new_block;
-                return new_block;
-            }
-            return -1;  // 沒有可用的 data block
-        }
+    int result = allocate_data_block_for_direct_block(fs, inode->directBlocks, BLOCK_NUMBER);
+    if (result != -1) {
+        return result;
     }
     
     // 2. direct blocks 都滿了，先暫時返回失敗
-    // 之後再實作 indirect 和 double indirect blocks 的部分
+    result = allocate_data_block_for_indirect_block(fs, inode->indirectBlock, BLOCK_NUMBER);
+    if (result != -1) {
+        return result;
+    }
+
     return -1;
 }
 
@@ -146,6 +146,66 @@ unsigned char* get_block_position(FileSystem* fs, int block_index) {
     }
     
     return fs->data_blocks + (block_index * BLOCK_SIZE);
+}
+
+int allocate_empty_int_array_block(FileSystem* fs) {
+    int new_block = allocate_data_block(fs);
+    if (new_block != -1) {
+        // 清空這個block（全部設為-1）
+        int* block_ptr = (int*)get_block_position(fs, new_block);
+        for (int j = 0; j < BLOCK_SIZE/sizeof(int); j++) {
+            block_ptr[j] = -1;
+        }
+    }
+    return new_block;
+}
+
+int allocate_data_block_for_direct_block(FileSystem* fs, int* directBlocks, int size) {
+    for (int i = 0; i < size; i++) {
+        if (directBlocks[i] == -1) {
+            // 找到空的 direct block slot，分配新的 block
+            int new_block = allocate_data_block(fs);
+            if (new_block != -1) {
+                directBlocks[i] = new_block;
+                return new_block;
+            }
+            return -1;  // 沒有可用的 data block
+        }
+    }
+    return -1;  // 沒有可用的 direct block slot
+}
+
+int allocate_data_block_for_indirect_block(FileSystem* fs, int* indirectBlock, int size) {
+    for (int i = 0; i < size; i++) {
+        if (indirectBlock[i] == -1) {
+            // 需要先分配一個block來存放指針
+            int indirect_block = allocate_empty_int_array_block(fs);
+            if (indirect_block == -1) return -1;
+            
+            // 分配一個新的data block
+            int new_block = allocate_data_block(fs);
+            if (new_block == -1) {
+                // 如果分配失敗，需要釋放剛才分配的indirect block
+                // TODO: 實現free_data_block
+                return -1;
+            }
+            
+            int* indirect_block_ptr = (int*)get_block_position(fs, indirect_block);
+
+            // 設置指針
+            indirectBlock[i] = indirect_block;
+            indirect_block_ptr[0] = new_block;
+            return new_block;
+        } else {
+            // 已有indirect block，檢查是否有空間
+            int* indirect_block_ptr = (int*)get_block_position(fs, indirectBlock[i]);
+            int result = allocate_data_block_for_direct_block(fs, indirect_block_ptr, BLOCK_SIZE/sizeof(int));
+            if (result != -1) {
+                return result;
+            }
+        }
+    }
+    return -1;  // 所有indirect blocks都滿
 }
 
 // void free_inode(FileSystem* fs, int inode_number) {
