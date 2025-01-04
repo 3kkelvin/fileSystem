@@ -31,7 +31,7 @@ int main() {
                 printf("Error: Partition size must not exceed 1GB.\n");
             } else {           
                 partition_size = (partition_size / 1024) * 1024;// 如果不是 1024 的倍數，向下取整
-                printf("Valid partition size = %d bytes\n", partition_size);
+                printf("partition size = %d bytes\n", partition_size);
                 break;
             }
         }
@@ -85,17 +85,20 @@ int Interaction(FileSystem *file_system) {
     //首先初始化一個Inode current_path指向root
     Inode *current_path;
     current_path = 0;//root 也就是buffer的address+block size
-
+    print_command();
+    while (getchar() != '\n' && getchar() != EOF); //確保輸入區沒有髒資料
     while (loop_flag) {
-        print_command();
+        printf("$ ");
         if (fgets(input, sizeof(input), stdin) == NULL) {
             printf("Error reading input\n");//沒東西
             continue;
         }
+        printf("input:%s\n",input);//todo:刪掉
         input[strcspn(input, "\n")] = '\0';//去掉輸入末尾的換行符    
         char *command = strtok(input, " ");//分割命令和參數
         char *arg = strtok(NULL, " ");
-
+        printf("command:%s\n",command);//todo:刪掉
+        printf("arg:%s\n",arg);//todo:刪掉
         int command_code = get_command_code(command);
 
         switch (command_code) {
@@ -170,4 +173,5 @@ void status(SuperBlock *status) {
     //printf("files blocks:%d\n",status->total_data);
     printf("block size:%d\n",status->block_size);
     //printf("free space:%d\n",status->free_space);
+    printf("\n\n");
 }
