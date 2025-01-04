@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <stdbool.h>
 #include "main.h"
+#include "dump.h"
 #include "inode.h"
 #include "space.h"
+
 
 int main() {
     int main_options, partition_size;
@@ -13,7 +13,7 @@ int main() {
     printf(" 2. create new partition in memory\n");
     scanf("%d", &main_options);
     if(main_options == 1) {//讀取檔案
-        file_system = read_dump();
+        file_system = (FileSystem *)read_dump();
         //todo:需要一個指標重新定位的方法
         if (strcmp(file_system->super_block->password, "mmslab406") != 0) {
             printf("密碼錯誤\n");
@@ -40,8 +40,8 @@ int main() {
         
         Interaction(file_system);
     } else {
-        printf('input error\n');
-        return;
+        printf("input error\n");
+        return 0;
     }
 
 }
@@ -76,7 +76,7 @@ void print_command(void) {
     printf("'status' show status of space\n");
     printf("'help' \n");
     printf("'exit' exit and store img\n");
-    printf('\n');
+    printf("\n");
 }
 
 int Interaction(FileSystem *file_system) {
@@ -149,7 +149,7 @@ int Interaction(FileSystem *file_system) {
                 break;
             case CMD_EXIT: //存檔
                 create_dump(file_system);
-                destroy_space(file_system);
+                //destroy_space(file_system);
                 loop_flag = false;
                 break;
             default:

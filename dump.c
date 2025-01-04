@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "dump.h"
 
 // 主程序 - dump 功能
@@ -67,7 +64,7 @@ unsigned char *read_dump() {
     printf("請輸入解密密碼：");
     if (fgets(password, PASSWORD_SIZE, stdin) == NULL) {
         perror("輸入密碼失敗");
-        return;
+        return NULL;
     }
     password[strcspn(password, "\n")] = '\0';
 

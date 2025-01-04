@@ -1,5 +1,5 @@
-#include "space.h"
 #include "inode.h"
+#include "space.h"
 //初始化一個root
 void init_root(FileSystem* fs) {
     //todo?檢查現在是否已經有root了?
