@@ -51,6 +51,9 @@ FileSystem* init_space(int partition_size) {
     fs->super_block->used_inodes = 0;
     fs->super_block->files_blocks = 0;
     fs->super_block->free_space = data_blocks * BLOCK_SIZE;
+    // 設定密碼
+    strncpy(fs->super_block->password, "mmslab406", sizeof(fs->super_block->password) - 1);
+    fs->super_block->password[sizeof(fs->super_block->password) - 1] = '\0';
 
     // 8. 初始化 bitmaps
     memset(fs->inode_bitmap, 0, inode_bitmap_size);

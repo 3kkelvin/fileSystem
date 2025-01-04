@@ -33,6 +33,7 @@ typedef struct {
     int files_blocks;   // 真的拿來存文件的block數量
     int block_size;     // block大小
     int free_space;     // 剩餘空間
+    char password[10];  // 密碼
 } SuperBlock;
 
 // 初始化文件系統
