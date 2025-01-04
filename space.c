@@ -50,7 +50,7 @@ FileSystem* init_space(int partition_size) {
     fs->super_block->used_inodes = 0;
     fs->super_block->block_size = BLOCK_SIZE;
     fs->super_block->used_blocks = metadata_blocks + inode_blocks;  // 系統佔用的區塊
-    // 設定密碼
+    // 設定解密識別字元
     strncpy(fs->super_block->password, "mmslab406", sizeof(fs->super_block->password) - 1);
     fs->super_block->password[sizeof(fs->super_block->password) - 1] = '\0';
 
@@ -119,25 +119,6 @@ int allocate_data_block(FileSystem* fs) {
     
     return -1;  // 沒有空閒的 data block
 }
-
-// int allocate_block(FileSystem* fs) {
-//     int total_blocks = fs->super_block->total_blocks;
-    
-//     // 查找第一個空閒塊
-//     for (int i = 0; i < total_blocks; i++) {
-//         int byte_index = i / 8;
-//         int bit_index = i % 8;
-        
-//         if (!(fs->block_bitmap[byte_index] & (1 << bit_index))) {
-//             // 標記為已使用
-//             fs->block_bitmap[byte_index] |= (1 << bit_index);
-//             fs->super_block->used_blocks++;
-//             fs->super_block->free_space -= BLOCK_SIZE;
-//             return i;
-//         }
-//     }
-//     return -1;  // 沒有空閒塊
-// }
 
 // void free_inode(FileSystem* fs, int inode_number) {
 //     int byte_index = inode_number / 8;

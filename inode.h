@@ -35,15 +35,13 @@ typedef struct {
     char password[10];  // 密碼
 } SuperBlock;
 // 一些可以計算的值：
+
 // 1. 可用於數據的 blocks：
 //    total_blocks - used_blocks
 
 // 2. 剩餘空間：
 //    (total_blocks - used_blocks) * block_size
 
-
-// 初始化文件系統
-void init_filesystem(int partition_size);
-// 顯示文件系統狀態
-void status();
+//初始化一個root
+void init_root(FileSystem* fs);
 #endif
