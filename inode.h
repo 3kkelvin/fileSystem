@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 #define MAX_FILES 100
-#define MAX_FILENAME_LENGTH 255//檔名長度上限
+#define MAX_FILENAME_LENGTH 60//檔名長度上限 包含副檔名 先設60確保block塞得下16個DirectoryEntry
 #define BLOCK_NUMBER 16 
 
 //Inode 存Metadata

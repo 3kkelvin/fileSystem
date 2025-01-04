@@ -167,7 +167,7 @@ void status(SuperBlock *status) {
     printf("used inodes:%d\n",status->used_inodes);
     printf("total blocks:%d\n",status->total_blocks);
     printf("used blocks:%d\n",status->used_blocks);
-    printf("files blocks:%d\n",status->total_data);
+    //printf("files blocks:%d\n",status->total_data);
     printf("block size:%d\n",status->block_size);
-    printf("free space:%d\n",status->free_space);
+    //printf("free space:%d\n",status->free_space);
 }
