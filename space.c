@@ -49,9 +49,7 @@ FileSystem* init_space(int partition_size) {
     fs->super_block->block_size = BLOCK_SIZE;
     fs->super_block->total_inodes = total_inodes;
     fs->super_block->used_inodes = 0;
-    fs->super_block->files_blocks = 0;
-    fs->super_block->free_space = data_blocks * BLOCK_SIZE;
-    // 設定密碼
+    // 設定解密識別字元
     strncpy(fs->super_block->password, "mmslab406", sizeof(fs->super_block->password) - 1);
     fs->super_block->password[sizeof(fs->super_block->password) - 1] = '\0';
 
@@ -62,38 +60,57 @@ FileSystem* init_space(int partition_size) {
     return fs;
 }
 
-int allocate_inode(FileSystem* fs) {
+Inode* allocate_inode(FileSystem* fs, bool isFile) {
     for (int i = 0; i < fs->super_block->total_inodes; i++) {
+        int byte = i / 8;
+        int bit = i % 8;
+
+        if (!(fs->inode_bitmap[byte] & (1 << bit))) {
+            // 2. 標記該 inode 為已使用
+            fs->inode_bitmap[byte] |= (1 << bit);
+            fs->super_block->used_inodes++;
+
+            // 3. 初始化該 inode
+            Inode* inode = &fs->inode_table[i];
+            inode->inode_index = i;
+            inode->isFile = isFile;
+            inode->isUsed = true;
+            inode->size = 0;
+
+            // 初始化所有 block 指針為 -1（表示未使用）
+            for (int i = 0; i < BLOCK_NUMBER; i++) {
+                inode->directBlocks[i] = -1;
+                inode->indirectBlock[i] = -1;
+                inode->doubleIndirectBlock[i] = -1;
+            }
+
+            return inode;
+        }
+    }
+
+    return NULL;  // 沒有空閒inode
+}
+
+
+
+int allocate_data_block(FileSystem* fs) {
+    // 遍歷 data bitmap 找尋空閒的 block
+    int data_blocks = fs->super_block->total_blocks - 
+                     (fs->super_block->used_blocks - fs->super_block->files_blocks);
+                     
+    for (int i = 0; i < data_blocks; i++) {
         int byte_index = i / 8;
         int bit_index = i % 8;
         
-        if (!(fs->inode_bitmap[byte_index] & (1 << bit_index))) {
-            fs->inode_bitmap[byte_index] |= (1 << bit_index);
-            fs->super_block->used_inodes++;
+        if (!(fs->data_bitmap[byte_index] & (1 << bit_index))) {
+            fs->data_bitmap[byte_index] |= (1 << bit_index);
+            fs->super_block->files_blocks++;
+            fs->super_block->free_space -= BLOCK_SIZE;
             return i;
         }
     }
-    return -1;  // 沒有空閒inode
+    return -1;  // 沒有空閒的 data block
 }
-
-// int allocate_block(FileSystem* fs) {
-//     int total_blocks = fs->super_block->total_blocks;
-    
-//     // 查找第一個空閒塊
-//     for (int i = 0; i < total_blocks; i++) {
-//         int byte_index = i / 8;
-//         int bit_index = i % 8;
-        
-//         if (!(fs->block_bitmap[byte_index] & (1 << bit_index))) {
-//             // 標記為已使用
-//             fs->block_bitmap[byte_index] |= (1 << bit_index);
-//             fs->super_block->used_blocks++;
-//             fs->super_block->free_space -= BLOCK_SIZE;
-//             return i;
-//         }
-//     }
-//     return -1;  // 沒有空閒塊
-// }
 
 // void free_inode(FileSystem* fs, int inode_number) {
 //     int byte_index = inode_number / 8;

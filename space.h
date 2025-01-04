@@ -20,8 +20,8 @@ typedef struct {
 // 初始化檔案系統
 FileSystem* init_space(int partition_size);
 
-// 分配一個新的數據塊，返回塊號，失敗返回-1
-int allocate_block(FileSystem* fs);
+// 分配一個新的數據塊，返回塊號，失敗返回null
+Inode* allocate_block(FileSystem* fs);
 
 // 釋放一個數據塊
 void free_block(FileSystem* fs, int block_number);

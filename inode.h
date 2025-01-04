@@ -30,11 +30,20 @@ typedef struct {
     int used_inodes;    // 已使用Inode數量
     int total_blocks;   // 總block數量
     int used_blocks;    // 已使用block數量
-    int files_blocks;   // 真的拿來存文件的block數量
     int block_size;     // block大小
-    int free_space;     // 剩餘空間
     char password[10];  // 密碼
 } SuperBlock;
+// 一些可以計算的值：
+// 1. 系統區域使用的 blocks：
+//    - SuperBlock + bitmaps + inode表占用的blocks
+//    - 這部分在初始化時計算一次，存在 used_blocks 中
+
+// 2. 可用於數據的 blocks：
+//    total_blocks - used_blocks
+
+// 3. 剩餘空間：
+//    (total_blocks - used_blocks) * block_size
+
 
 //初始化一個root
 void init_root(FileSystem* fs);

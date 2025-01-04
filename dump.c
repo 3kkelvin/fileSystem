@@ -102,12 +102,9 @@ unsigned char *load_memory(const char *password) {
         exit(EXIT_FAILURE);
     }
     fclose(file);
-
     // 解密數據
     xor_encrypt_decrypt(encrypted_data, file_size, password);
     
-    //在這邊檢查檔案前面加密特徵 確定是否有成功解碼
-
     return encrypted_data;
 
     
