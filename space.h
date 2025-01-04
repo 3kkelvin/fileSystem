@@ -32,11 +32,20 @@ int allocate_single_block_for_inode(FileSystem* fs, Inode* inode);
 // 取得一個data block的位置
 unsigned char* get_block_position(FileSystem* fs, int block_index);
 
-// // 釋放一個數據塊
-// void free_block(FileSystem* fs, int block_number);
+// 分配一個新的int array block，並初始化為-1
+int allocate_empty_int_array_block(FileSystem* fs);
 
-// // 釋放一個inode
-// void free_inode(FileSystem* fs, int inode_number);
+// 分配一個新的data block，並設置到direct block中
+int allocate_data_block_for_direct_block(FileSystem* fs, int* directBlocks, int size);
+
+// 分配一個新的data block，並設置到indirect block中
+int allocate_data_block_for_indirect_block(FileSystem* fs, int* indirectBlock, int size);
+
+// 釋放一個inode
+bool free_inode(FileSystem* fs, int inode_index);
+
+// 釋放一個data block
+bool free_data_block(FileSystem* fs, int block_index);
 
 // // 讀取指定塊的數據
 // void read_block(FileSystem* fs, int block_number, void* buffer);
