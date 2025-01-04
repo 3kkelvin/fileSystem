@@ -185,8 +185,7 @@ int allocate_data_block_for_indirect_block(FileSystem* fs, int* indirectBlock, i
             // 分配一個新的data block
             int new_block = allocate_data_block(fs);
             if (new_block == -1) {
-                // 如果分配失敗，需要釋放剛才分配的indirect block
-                // TODO: 實現free_data_block
+                free_data_block(fs, indirect_block);
                 return -1;
             }
             
@@ -208,27 +207,68 @@ int allocate_data_block_for_indirect_block(FileSystem* fs, int* indirectBlock, i
     return -1;  // 所有indirect blocks都滿
 }
 
-// void free_inode(FileSystem* fs, int inode_number) {
-//     int byte_index = inode_number / 8;
-//     int bit_index = inode_number % 8;
-    
-//     if (fs->inode_bitmap[byte_index] & (1 << bit_index)) {
-//         fs->inode_bitmap[byte_index] &= ~(1 << bit_index);
-//         fs->super_block->used_inodes--;
-//     }
-// }
+bool free_inode(FileSystem* fs, int inode_index) {
+    // 1. 檢查參數有效性
+    if (inode_index < 0 || inode_index >= fs->super_block->total_inodes) {
+        return false;
+    }
 
-// void free_block(FileSystem* fs, int block_number) {
-//     int byte_index = block_number / 8;
-//     int bit_index = block_number % 8;
+    // 2. 獲取inode
+    Inode* inode = &fs->inode_table[inode_index];
+    if (!inode->isUsed) return false;  // 已經是空閒的
+
+    // 3. 釋放所有direct blocks
+    for (int i = 0; i < BLOCK_NUMBER; i++) {
+        if (inode->directBlocks[i] != -1) {
+            free_data_block(fs, inode->directBlocks[i]);
+        }
+    }
+
+    // 4. 釋放所有indirect blocks
+    for (int i = 0; i < BLOCK_NUMBER; i++) {
+        if (inode->indirectBlock[i] != -1) {
+            // 先釋放這個indirect block指向的所有blocks
+            int* indirect_block_ptr = (int*)get_block_position(fs, inode->indirectBlock[i]);
+            for (int j = 0; j < BLOCK_SIZE/sizeof(int); j++) {
+                if (indirect_block_ptr[j] != -1) {
+                    free_data_block(fs, indirect_block_ptr[j]);
+                }
+            }
+            // 再釋放indirect block本身
+            free_data_block(fs, inode->indirectBlock[i]);
+        }
+    }
+
+    // 5. 在bitmap中標記為未使用
+    int byte_index = inode_index / 8;
+    int bit_index = inode_index % 8;
+    fs->inode_bitmap[byte_index] &= ~(1 << bit_index);
+    fs->super_block->used_inodes--;
+
+    return true;
+}
+
+bool free_data_block(FileSystem* fs, int block_index) {
+    // 1. 檢查參數有效性
+    if (block_index < 0 || block_index >= (fs->super_block->total_blocks - fs->super_block->system_blocks)) {
+        return false;
+    }
+
+    // 2. 計算在 bitmap 中的位置
+    int byte_index = block_index / 8;
+    int bit_index = block_index % 8;
+
+    // 3. 檢查這個 block 是否已經是空閒的
+    if (!(fs->data_bitmap[byte_index] & (1 << bit_index))) {
+        return false;  // 已經是空閒的，不需要釋放
+    }
     
-//     // 只有當塊被標記為已使用時才釋放
-//     if (fs->block_bitmap[byte_index] & (1 << bit_index)) {
-//         fs->block_bitmap[byte_index] &= ~(1 << bit_index);
-//         fs->super_block->used_blocks--;
-//         fs->super_block->free_space += BLOCK_SIZE;
-//     }
-// }
+    // 4. 在 bitmap 中標記為未使用
+    fs->data_bitmap[byte_index] &= ~(1 << bit_index);
+    fs->super_block->used_blocks--;
+
+    return true;
+}
 
 // void read_block(FileSystem* fs, int block_number, void* buffer) {
 //     memcpy(buffer, fs->data_blocks + block_number * BLOCK_SIZE, BLOCK_SIZE);
