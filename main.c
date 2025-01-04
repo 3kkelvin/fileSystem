@@ -5,27 +5,28 @@
 
 int main() {
     int main_options, partition_size;
-    unsigned char *file_system;
+    FileSystem *file_system;
 
     printf("options:\n");
     printf(" 1. loads from file\n");
     printf(" 2. create new partition in memory\n");
     scanf("%d", &main_options);
     if(main_options == 1) {
-        //給明憲做dumpfile的讀寫
-        //call真的作業系統func
+        file_system = read_dump();
+        //需要一個指標重新定位的方法
+
+        Interaction(file_system);
     } else if(main_options == 2) {
         //分配空間
         printf("Input size of a new partition (example 102400)\n");
         scanf("%d", &partition_size);
         //加一點輸入檢查 至少要超過某個最小值 不要超過某個最大值 取整
         printf("partition size = %d\n", partition_size);
-        FileSystem *file_system; 
+         
         file_system = init_space(partition_size);//call初始化func 分配空間、建立特殊資訊、分配node
         //建立Root 
-
-
-        //call真的作業系統func
+        
+        Interaction(file_system);
     } else {
         printf('input error\n');
         return;
@@ -127,16 +128,16 @@ int Interaction(FileSystem *file_system) {
                 //edit();
                 //檢查current_path的Directory 如果有找到 調用珞昱的方法
                 break;
-            case 10:
+            case 10://列出當前fs資訊
                 status(file_system->super_block);
-                //列出當前超級block內容
                 break;
             case 11:
                 //help();
                 //單純print 一堆字
                 break;
-            case 12:
-                //存檔 明憲做
+            case 12: //存檔
+                create_dump(file_system);//需要在FileSystem最前面加一個字串 作為解密是否成功用
+                destroy_space(file_system);
                 loop_flag = false;
                 break;
             default:
