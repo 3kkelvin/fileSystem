@@ -20,14 +20,14 @@ typedef struct {
 // 初始化檔案系統
 FileSystem* init_space(int partition_size);
 
+// 分配一個新的數據塊，返回塊號，失敗返回NULL
+Inode* allocate_inode(FileSystem* fs, bool isFile);
+
 // 分配一個新的數據塊，返回塊號，失敗返回-1
-int allocate_block(FileSystem* fs);
+int allocate_data_block(FileSystem* fs); 
 
 // 釋放一個數據塊
 void free_block(FileSystem* fs, int block_number);
-
-// 分配一個新的inode，返回inode號，失敗返回-1
-int allocate_inode(FileSystem* fs);
 
 // 釋放一個inode
 void free_inode(FileSystem* fs, int inode_number);
