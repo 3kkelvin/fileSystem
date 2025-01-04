@@ -12,7 +12,7 @@ typedef struct {
     SuperBlock* super_block;     // 指向超級塊
     Inode* inode_table;          // 指向inode表
     unsigned char* data_blocks;   // 指向數據塊區域
-    unsigned char* block_bitmap;  // 塊位圖，用於追踪數據塊的使用情況
+    unsigned char* data_bitmap;  // 塊位圖，用於追踪數據塊的使用情況
     unsigned char* inode_bitmap;  // inode位圖，用於追踪inode的使用情況
     unsigned char* raw_space;     // 指向整個原始空間的起始位置
 } FileSystem;
