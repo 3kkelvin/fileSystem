@@ -20,25 +20,31 @@ typedef struct {
 // 初始化檔案系統
 FileSystem* init_space(int partition_size);
 
-// 分配一個新的數據塊，返回塊號，失敗返回NULL
+// 分配一個新的inode，返回塊號，失敗返回NULL
 Inode* allocate_inode(FileSystem* fs, bool isFile);
 
-// 分配一個新的數據塊，返回塊號，失敗返回-1
+// 分配一個新的data block，返回塊號，失敗返回-1
 int allocate_data_block(FileSystem* fs); 
 
-// 釋放一個數據塊
-void free_block(FileSystem* fs, int block_number);
+// 為 inode 分配一個新的 data block
+int allocate_single_block_for_inode(FileSystem* fs, Inode* inode);
 
-// 釋放一個inode
-void free_inode(FileSystem* fs, int inode_number);
+// 取得一個data block的位置
+unsigned char* get_block_position(FileSystem* fs, int block_index);
 
-// 讀取指定塊的數據
-void read_block(FileSystem* fs, int block_number, void* buffer);
+// // 釋放一個數據塊
+// void free_block(FileSystem* fs, int block_number);
 
-// 寫入數據到指定塊
-void write_block(FileSystem* fs, int block_number, const void* buffer);
+// // 釋放一個inode
+// void free_inode(FileSystem* fs, int inode_number);
 
-// 銷毀檔案系統，釋放所有記憶體
-void destroy_space(FileSystem* fs);
+// // 讀取指定塊的數據
+// void read_block(FileSystem* fs, int block_number, void* buffer);
+
+// // 寫入數據到指定塊
+// void write_block(FileSystem* fs, int block_number, const void* buffer);
+
+// // 銷毀檔案系統，釋放所有記憶體
+// void destroy_space(FileSystem* fs);
 
 #endif

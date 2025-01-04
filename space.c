@@ -120,6 +120,34 @@ int allocate_data_block(FileSystem* fs) {
     return -1;  // 沒有空閒的 data block
 }
 
+int allocate_single_block_for_inode(FileSystem* fs, Inode* inode) {
+    // 1. 先檢查 direct blocks
+    for (int i = 0; i < BLOCK_NUMBER; i++) {
+        if (inode->directBlocks[i] == -1) {
+            // 找到空的 direct block slot，分配新的 block
+            int new_block = allocate_data_block(fs);
+            if (new_block != -1) {
+                inode->directBlocks[i] = new_block;
+                return new_block;
+            }
+            return -1;  // 沒有可用的 data block
+        }
+    }
+    
+    // 2. direct blocks 都滿了，先暫時返回失敗
+    // 之後再實作 indirect 和 double indirect blocks 的部分
+    return -1;
+}
+
+unsigned char* get_block_position(FileSystem* fs, int block_index) {
+    // 檢查參數有效性
+    if (block_index < 0 || block_index >= (fs->super_block->total_blocks - fs->super_block->system_blocks)) {
+        return NULL;
+    }
+    
+    return fs->data_blocks + (block_index * BLOCK_SIZE);
+}
+
 // void free_inode(FileSystem* fs, int inode_number) {
 //     int byte_index = inode_number / 8;
 //     int bit_index = inode_number % 8;
