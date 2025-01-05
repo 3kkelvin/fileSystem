@@ -74,7 +74,7 @@ void read_directory_entries(FileSystem* fs, int block_index) {
     }
 }
 
-Inode* cd(FileSystem* fs, Inode* inode, char *arg) {
+Inode* cd(FileSystem* fs, Inode* inode, char *arg, char *text) {
     Inode *temp_inode = (Inode *)malloc(sizeof(Inode));
     memcpy(temp_inode, inode, sizeof(Inode));//複製inode
     size_t length = strlen(arg)+1;
@@ -126,6 +126,24 @@ Inode* cd(FileSystem* fs, Inode* inode, char *arg) {
         token = strtok(NULL, "/");
     }
     if(token == NULL) {//cd的目的地真的存在
+        if (arg[0] == '/') {//絕對路徑
+            strcpy(text, arg);//直接複製
+            if (strncmp(text, "/root", 5) == 0) {
+                memmove(text, text + 5, strlen(text + 5) + 1); //再移除前面的/root
+            }
+            strcpy(text, arg);
+        } else {//相對路徑
+            if(strcmp(arg, ".") == 0) {//cd自己
+            } else if (strcmp(arg, "..") == 0) {//cd上層
+                char *last_slash = strrchr(text, '/'); //移除最後一段/xxx
+                if (last_slash != NULL) {
+                    *last_slash = '\0';
+                }
+            } else {
+                strcat(text, "/");//加入/
+                strcat(text, arg); //加入arg到後面
+            }
+        }
         return temp_inode;
     }
     return inode;//路徑不完全存在

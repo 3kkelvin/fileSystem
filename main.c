@@ -48,13 +48,14 @@ int main() {
 int Interaction(FileSystem *file_system) {
     bool loop_flag = true;
     char input[256];
+    char current_path_text[256];
     //首先初始化一個Inode current_path指向root
     Inode *current_path;
     current_path = get_inode(file_system, 0);//root  
     print_command();
     while (getchar() != '\n' && getchar() != EOF); //確保輸入區沒有髒資料
     while (loop_flag) {
-        printf("$ ");
+        printf("%s/ $ ",current_path_text);
         if (fgets(input, sizeof(input), stdin) == NULL) {
             printf("Error reading input\n");//沒東西
             continue;
@@ -72,7 +73,7 @@ int Interaction(FileSystem *file_system) {
                 ls(file_system, current_path);
                 break;
             case CMD_CD://要考慮絕對路徑 
-                current_path = cd(file_system, current_path, arg);
+                current_path = cd(file_system, current_path, arg, current_path_text);
                 //檢查arg 可能要繼續分割
                 //新的Inode cd_path 為 current_path
                 //loop 檢查cd_path對應的Directory 設定cd_path 為arg對應的Inode 如果有任何錯就直接報錯跳出
