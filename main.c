@@ -50,7 +50,7 @@ int Interaction(FileSystem *file_system) {
     char input[256];
     //首先初始化一個Inode current_path指向root
     Inode *current_path;
-    current_path = file_system->inode_table;//root  
+    current_path = get_inode(file_system, 0);//root  
     print_command();
     while (getchar() != '\n' && getchar() != EOF); //確保輸入區沒有髒資料
     while (loop_flag) {
@@ -70,10 +70,9 @@ int Interaction(FileSystem *file_system) {
         switch (command_code) {
             case CMD_LS:
                 ls(file_system, current_path);
-                //檢查current_path對應的Directory 把KEY全部列出
                 break;
             case CMD_CD://要考慮絕對路徑 
-                //cd();
+                current_path = cd(file_system, current_path, arg);
                 //檢查arg 可能要繼續分割
                 //新的Inode cd_path 為 current_path
                 //loop 檢查cd_path對應的Directory 設定cd_path 為arg對應的Inode 如果有任何錯就直接報錯跳出
@@ -84,7 +83,10 @@ int Interaction(FileSystem *file_system) {
                 //檢查current_path對應的Directory 如果有找到 釋放inode空間、釋放block空間、刪除那組Directory 
                 break;
             case CMD_MKDIR://要考慮絕對路徑 要考慮多層路徑
-                //mkdir();
+                if (arg == NULL) {//沒路徑
+                    break;
+                }
+                mkdir(file_system, current_path, arg);
                 //新增一個inode 
                 //current_path的Directory 加一條 指向inode
                 //新inode的Directory 加兩條 指向自己和current_path
@@ -122,7 +124,7 @@ int Interaction(FileSystem *file_system) {
                 loop_flag = false;
                 break;
             default:
-                printf("Unknown command: %s\n", *command);
+                printf("Unknown command\n");
                 break;
         }
     }

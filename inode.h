@@ -44,5 +44,5 @@ typedef struct SuperBlock{
 
 //初始化一個root
 void init_root(FileSystem* fs);
-int write_directory_entry(FileSystem* fs, int current_block_index, DirectoryEntry* new_entry);
+int write_directory_entry(FileSystem* fs, Inode* inode, int current_block_index, DirectoryEntry* new_entry);
 #endif
