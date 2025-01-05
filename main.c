@@ -72,12 +72,8 @@ int Interaction(FileSystem *file_system) {
             case CMD_LS:
                 ls(file_system, current_path);
                 break;
-            case CMD_CD://要考慮絕對路徑 
+            case CMD_CD:
                 current_path = cd(file_system, current_path, arg, current_path_text);
-                //檢查arg 可能要繼續分割
-                //新的Inode cd_path 為 current_path
-                //loop 檢查cd_path對應的Directory 設定cd_path 為arg對應的Inode 如果有任何錯就直接報錯跳出
-                //沒錯的話設定current_path為最終cd_path
                 break;
             case CMD_RM://要考慮絕對路徑
                 //rm();
@@ -88,12 +84,12 @@ int Interaction(FileSystem *file_system) {
                     break;
                 }
                 mkdir(file_system, current_path, arg);
-                //新增一個inode 
-                //current_path的Directory 加一條 指向inode
-                //新inode的Directory 加兩條 指向自己和current_path
                 break;
             case CMD_RMDIR://只刪除空目錄 //要考慮絕對路徑 //不能刪除當前目錄
-                //rmdir();
+                if (arg == NULL) {//沒路徑
+                    break;
+                }
+                rmdir(file_system, current_path, arg);
                 //檢查current_path的Directory 如果有找到 而且對方Directory只有.和.. 釋放inode空間、釋放block空間、刪除那組Directory 
                 break;
             case CMD_PUT:
@@ -116,8 +112,7 @@ int Interaction(FileSystem *file_system) {
                 status(file_system->super_block);
                 break;
             case CMD_HELP:
-                //help();
-                //單純print 一堆字
+                print_command();//重新print出能用的指令
                 break;
             case CMD_EXIT: //存檔
                 create_dump(file_system);

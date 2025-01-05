@@ -16,5 +16,6 @@ void ls(FileSystem* fs, Inode* inode);
 //跳至該路徑
 Inode* cd(FileSystem* fs, Inode* inode, char *arg, char *text);
 void mkdir(FileSystem* fs, Inode* inode, char *arg);
+void rmdir(FileSystem* fs, Inode* inode, char *arg);
 void read_directory_entries(FileSystem* fs, int block_index);
 #endif
