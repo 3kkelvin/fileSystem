@@ -26,11 +26,14 @@ Inode* allocate_inode(FileSystem* fs, bool isFile);
 // 分配一個新的data block，返回塊號，失敗返回-1
 int allocate_data_block(FileSystem* fs); 
 
-// 為 inode 分配一個新的 data block
-int allocate_single_block_for_inode(FileSystem* fs, Inode* inode);
+// 取得一個使用中inode的位置，如果不存在或是未使用返回NULL
+Inode* get_inode(FileSystem* fs, int inode_index);
 
 // 取得一個data block的位置
 unsigned char* get_block_position(FileSystem* fs, int block_index);
+
+// 為 inode 分配一個新的 data block
+int allocate_single_block_for_inode(FileSystem* fs, Inode* inode);
 
 // 分配一個新的int array block，並初始化為-1
 int allocate_empty_int_array_block(FileSystem* fs);
@@ -46,6 +49,9 @@ bool free_inode(FileSystem* fs, int inode_index);
 
 // 釋放一個data block
 bool free_data_block(FileSystem* fs, int block_index);
+
+// 根據size為inode分配data block
+bool allocate_block_by_size_for_inode(FileSystem* fs, Inode* inode, size_t size)
 
 // // 讀取指定塊的數據
 // void read_block(FileSystem* fs, int block_number, void* buffer);
