@@ -17,12 +17,15 @@ typedef struct FileSystem{
     unsigned char* raw_space;     // 指向整個原始空間的起始位置
 } FileSystem;
 
+// Note: 注明private的函數是不對外暴露的，僅供內部調用
+
 // 初始化檔案系統
 FileSystem* init_space(int partition_size);
 
 // 分配一個新的inode，返回塊號，失敗返回NULL
 Inode* allocate_inode(FileSystem* fs, bool isFile);
 
+// private
 // 分配一個新的data block，返回塊號，失敗返回-1
 int allocate_data_block(FileSystem* fs); 
 
@@ -35,12 +38,15 @@ unsigned char* get_block_position(FileSystem* fs, int block_index);
 // 為 inode 分配一個新的 data block
 int allocate_single_block_for_inode(FileSystem* fs, Inode* inode);
 
+// private
 // 分配一個新的int array block，並初始化為-1
 int allocate_empty_int_array_block(FileSystem* fs);
 
+// private
 // 分配一個新的data block，並設置到direct block中
 int allocate_data_block_for_direct_block(FileSystem* fs, int* directBlocks, int size);
 
+// private
 // 分配一個新的data block，並設置到indirect block中
 int allocate_data_block_for_indirect_block(FileSystem* fs, int* indirectBlock, int size);
 
@@ -50,8 +56,24 @@ bool free_inode(FileSystem* fs, int inode_index);
 // 釋放一個data block
 bool free_data_block(FileSystem* fs, int block_index);
 
+// private
 // 根據size為inode分配data block
-bool allocate_block_by_size_for_inode(FileSystem* fs, Inode* inode, size_t size)
+bool allocate_block_by_size_for_inode(FileSystem* fs, Inode* inode, size_t size);
+
+// private
+// 寫入數據到指定data block
+void write_block(FileSystem* fs, int block_index, const void* data, size_t size);
+
+// 寫入數據到指定inode
+bool write_file_data(FileSystem* fs, Inode* inode, const void* data, size_t size);
+
+// private
+// 寫入direct block
+void write_direct_block(FileSystem* fs, int* directBlocks, const char** data_ptr, size_t* remaining_size);
+
+// private
+// 讀取指定塊的數據
+void write_indirect_block(FileSystem* fs, int* indirectBlock, const char** data_ptr, size_t* remaining_size);
 
 // // 讀取指定塊的數據
 // void read_block(FileSystem* fs, int block_number, void* buffer);

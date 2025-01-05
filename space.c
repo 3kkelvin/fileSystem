@@ -318,6 +318,64 @@ bool allocate_block_by_size_for_inode(FileSystem* fs, Inode* inode, size_t size)
     return true;
 }
 
+void write_block(FileSystem* fs, int block_index, const void* data, size_t size) {
+    unsigned char* block_ptr = get_block_position(fs, block_index);
+    if (block_ptr != NULL) {
+        // 確保不會寫入超過block大小
+        size_t write_size = (size > BLOCK_SIZE) ? BLOCK_SIZE : size;
+        memcpy(block_ptr, data, write_size);
+    }
+}
+
+bool write_file_data(FileSystem* fs, Inode* inode, const void* data, size_t size) {
+    // 先分配足夠的blocks
+    if (!allocate_block_by_size_for_inode(fs, inode, size)) {
+        return false;
+    }
+
+    // 開始寫入數據
+    const char* data_ptr = (const char*)data;
+    size_t remaining_size = size;
+
+    // 1. 寫入 direct blocks
+    write_direct_block(fs, inode->directBlocks, &data_ptr, &remaining_size);
+
+    // 2. 如果還有數據，寫入 indirect blocks
+    if (remaining_size > 0) {
+        write_indirect_block(fs, inode->indirectBlock, &data_ptr, &remaining_size);
+    }
+
+    return (remaining_size == 0);  // 是否全部寫入完成
+}
+
+void write_direct_block(FileSystem* fs, int* directBlocks, const char** data_ptr, size_t* remaining_size) {
+    int block_index = 0;
+    
+    while (*remaining_size > 0 && block_index < BLOCK_NUMBER) {
+        if (directBlocks[block_index] != -1) {
+            size_t write_size = (*remaining_size > BLOCK_SIZE) ? BLOCK_SIZE : *remaining_size;
+            write_block(fs, directBlocks[block_index], *data_ptr, write_size);
+            *data_ptr += write_size;      // 更新指向的指標位置
+            *remaining_size -= write_size;
+        }
+        block_index++;
+    }
+}
+
+void write_indirect_block(FileSystem* fs, int* indirectBlock, const char** data_ptr, size_t* remaining_size) {
+    int block_index = 0;
+    
+    while (*remaining_size > 0 && block_index < BLOCK_NUMBER) {
+        if (indirectBlock[block_index] != -1) {
+            // 取得這個 indirect block 指向的位置
+            int* indirect_block_ptr = (int*)get_block_position(fs, indirectBlock[block_index]);
+            // 用 write_direct_block 來寫入這個 indirect block 指向的數據
+            write_direct_block(fs, indirect_block_ptr, data_ptr, remaining_size);
+        }
+        block_index++;
+    }
+}
+
 // void read_block(FileSystem* fs, int block_number, void* buffer) {
 //     memcpy(buffer, fs->data_blocks + block_number * BLOCK_SIZE, BLOCK_SIZE);
 // }
