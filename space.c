@@ -376,17 +376,53 @@ void write_indirect_block(FileSystem* fs, int* indirectBlock, const char** data_
     }
 }
 
-// void read_block(FileSystem* fs, int block_number, void* buffer) {
-//     memcpy(buffer, fs->data_blocks + block_number * BLOCK_SIZE, BLOCK_SIZE);
-// }
+void read_block(FileSystem* fs, int block_index, void* buffer, size_t size) {
+    unsigned char* block_ptr = get_block_position(fs, block_index);
+    if (block_ptr != NULL) {
+        size_t read_size = (size > BLOCK_SIZE) ? BLOCK_SIZE : size;
+        memcpy(buffer, block_ptr, read_size);
+    }
+}
 
-// void write_block(FileSystem* fs, int block_number, const void* buffer) {
-//     memcpy(fs->data_blocks + block_number * BLOCK_SIZE, buffer, BLOCK_SIZE);
-// }
+size_t read_file_data(FileSystem* fs, Inode* inode, void* buffer) {
+    char* buf_ptr = (char*)buffer;
+    size_t remaining_size = inode->size;
+    size_t total_read = 0;
 
-// void destroy_space(FileSystem* fs) {
-//     if (fs) {
-//         free(fs->super_block);  // 這會釋放整個raw_space
-//         free(fs);
-//     }
-// }
+    // 1. 從 direct blocks 讀取
+    read_direct_block(fs, inode->directBlocks, &buf_ptr, &remaining_size, &total_read);
+
+    // 2. 從 indirect blocks 讀取（如果還需要）
+    if (remaining_size > 0) {
+        read_indirect_block(fs, inode->indirectBlock, &buf_ptr, &remaining_size, &total_read);
+    }
+
+    return total_read;
+}
+
+void read_direct_block(FileSystem* fs, int* directBlocks, char** buf_ptr, size_t* remaining_size, size_t* total_read) {
+    int block_index = 0;
+    
+    while (*remaining_size > 0 && block_index < BLOCK_NUMBER) {
+        if (directBlocks[block_index] != -1) {
+            size_t read_size = (*remaining_size > BLOCK_SIZE) ? BLOCK_SIZE : *remaining_size;
+            read_block(fs, directBlocks[block_index], *buf_ptr, read_size);
+            *buf_ptr += read_size;
+            *remaining_size -= read_size;
+            *total_read += read_size;
+        }
+        block_index++;
+    }
+}
+
+void read_indirect_block(FileSystem* fs, int* indirectBlock, char** buf_ptr, size_t* remaining_size, size_t* total_read) {
+    int block_index = 0;
+    
+    while (*remaining_size > 0 && block_index < BLOCK_NUMBER) {
+        if (indirectBlock[block_index] != -1) {
+            int* indirect_block_ptr = (int*)get_block_position(fs, indirectBlock[block_index]);
+            read_direct_block(fs, indirect_block_ptr, buf_ptr, remaining_size, total_read);
+        }
+        block_index++;
+    }
+}
