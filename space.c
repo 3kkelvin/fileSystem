@@ -122,6 +122,29 @@ int allocate_data_block(FileSystem* fs) {
     return -1;  // 沒有空閒的 data block
 }
 
+Inode* get_inode(FileSystem* fs, int inode_index) {
+    // 檢查參數有效性
+    if (inode_index < 0 || inode_index >= fs->super_block->total_inodes) {
+        return NULL;
+    }
+    
+    Inode* inode = &fs->inode_table[inode_index];
+    if (!inode->isUsed) {
+        return NULL;
+    }
+    
+    return inode;
+}
+
+unsigned char* get_block_position(FileSystem* fs, int block_index) {
+    // 檢查參數有效性
+    if (block_index < 0 || block_index >= (fs->super_block->total_blocks - fs->super_block->system_blocks)) {
+        return NULL;
+    }
+    
+    return fs->data_blocks + (block_index * BLOCK_SIZE);
+}
+
 int allocate_single_block_for_inode(FileSystem* fs, Inode* inode) {
     // 1. 先檢查 direct blocks
     int result = allocate_data_block_for_direct_block(fs, inode->directBlocks, BLOCK_NUMBER);
@@ -136,15 +159,6 @@ int allocate_single_block_for_inode(FileSystem* fs, Inode* inode) {
     }
 
     return -1;
-}
-
-unsigned char* get_block_position(FileSystem* fs, int block_index) {
-    // 檢查參數有效性
-    if (block_index < 0 || block_index >= (fs->super_block->total_blocks - fs->super_block->system_blocks)) {
-        return NULL;
-    }
-    
-    return fs->data_blocks + (block_index * BLOCK_SIZE);
 }
 
 int allocate_empty_int_array_block(FileSystem* fs) {
@@ -266,6 +280,41 @@ bool free_data_block(FileSystem* fs, int block_index) {
     fs->data_bitmap[byte_index] &= ~(1 << bit_index);
     fs->super_block->used_blocks--;
 
+    return true;
+}
+
+bool allocate_block_by_size_for_inode(FileSystem* fs, Inode* inode, size_t size) {
+    // 1. 計算需要多少個 blocks
+    int blocks_needed = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;  // 向上取整
+    
+    // 2. 檢查是否有足夠的空間
+    int available_blocks = fs->super_block->total_blocks - fs->super_block->used_blocks;
+    if (blocks_needed > available_blocks) {
+        return false;
+    }
+
+    // 保存原始大小，以便在失敗時恢復
+    int original_size = inode->size;
+    
+    // 3. 分配需要的 blocks
+    for (int i = 0; i < blocks_needed; i++) {
+        int result = allocate_single_block_for_inode(fs, inode);
+        if (result == -1) {
+            // 分配失敗，釋放已分配的blocks
+            inode->size = original_size;  // 恢復原始大小
+            free_inode(fs, inode->inode_index);  // 釋放所有已分配的blocks
+            
+            // 重新分配原有的blocks（如果有的話）
+            if (original_size > 0) {
+                allocate_block_by_size_for_inode(fs, inode, original_size);
+            }
+            return false;
+        }
+    }
+    
+    // 4. 更新 inode 的大小
+    inode->size = size;
+    
     return true;
 }
 
