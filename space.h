@@ -19,7 +19,7 @@ typedef struct FileSystem{
 
 // Note: 注明private的函數是不對外暴露的，僅供內部調用
 
-// 初始化檔案系統
+// 初始化檔案系統, 返回檔案系統指針，失敗返回NULL
 FileSystem* init_space(int partition_size);
 
 // 分配一個新的inode，返回塊號，失敗返回NULL
@@ -32,10 +32,10 @@ int allocate_data_block(FileSystem* fs);
 // 取得一個使用中inode的位置，如果不存在或是未使用返回NULL
 Inode* get_inode(FileSystem* fs, int inode_index);
 
-// 取得一個data block的位置
+// 取得一個data block的位置, 如果不存在回NULL
 unsigned char* get_block_position(FileSystem* fs, int block_index);
 
-// 為 inode 分配一個新的 data block
+// 為 inode 分配一個新的 data block，返回block index，如果空間不足或是inode data block已滿，返回-1
 int allocate_single_block_for_inode(FileSystem* fs, Inode* inode);
 
 // private
@@ -43,11 +43,11 @@ int allocate_single_block_for_inode(FileSystem* fs, Inode* inode);
 int allocate_empty_int_array_block(FileSystem* fs);
 
 // private
-// 分配一個新的data block，並設置到direct block中
+// 分配一個新的data block並設置到direct block中，返回block index，如果空間不足或是direct block已滿，返回-1
 int allocate_data_block_for_direct_block(FileSystem* fs, int* directBlocks, int size);
 
 // private
-// 分配一個新的data block，並設置到indirect block中
+// 分配一個新的data block並設置到indirect block中，返回block index，如果空間不足或是indirect block已滿，返回-1
 int allocate_data_block_for_indirect_block(FileSystem* fs, int* indirectBlock, int size);
 
 // 釋放一個inode
@@ -57,14 +57,14 @@ bool free_inode(FileSystem* fs, int inode_index);
 bool free_data_block(FileSystem* fs, int block_index);
 
 // private
-// 根據size為inode分配data block
+// 根據size為inode分配data block，如果空間不足或是inode data block已滿，返回false
 bool allocate_block_by_size_for_inode(FileSystem* fs, Inode* inode, size_t size);
 
 // private
 // 寫入數據到指定data block
 void write_block(FileSystem* fs, int block_index, const void* data, size_t size);
 
-// 寫入數據到指定inode
+// 寫入數據到指定inode，如果空間不足或是inode data block已滿，返回false
 bool write_file_data(FileSystem* fs, Inode* inode, const void* data, size_t size);
 
 // private
