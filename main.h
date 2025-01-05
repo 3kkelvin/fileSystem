@@ -1,3 +1,10 @@
+#ifndef MAIN_H
+#define MAIN_H
+#include <stdio.h>
+#include <stdbool.h>
+typedef struct SuperBlock SuperBlock;
+typedef struct FileSystem FileSystem;
+
 typedef enum {
     CMD_UNKNOWN = 0, // 未知命令
     CMD_LS,
@@ -28,11 +35,7 @@ PathResult parse_path(const char *arg);
 
 //各項指令
 
-//列出指令
-void print_command(void);
-//指令轉
-int get_command_code(const char *input)
 
 
-//顯示目前fs資訊
-void status(SuperBlock *status);
+
+#endif

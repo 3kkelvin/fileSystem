@@ -1,14 +1,14 @@
 // space.h
 #ifndef SPACE_H
 #define SPACE_H
-
-#include "inode.h"
 #include <stdlib.h>
-
+#include <string.h>
+#include <stdbool.h>
 #define BLOCK_SIZE 1024  // 1KB per block
-
+typedef struct SuperBlock SuperBlock;
+typedef struct Inode Inode;
 // 分配的記憶體空間結構
-typedef struct {
+typedef struct FileSystem{
     SuperBlock* super_block;     // 指向超級塊
     Inode* inode_table;          // 指向inode表
     unsigned char* data_blocks;   // 指向數據塊區域

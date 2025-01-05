@@ -1,6 +1,5 @@
 #include "space.h"
-#include <string.h>
-
+#include "inode.h"
 FileSystem* init_space(int partition_size) {
     // 1. 基本檢查和分配
     if (partition_size <= 0 || partition_size % BLOCK_SIZE != 0) {

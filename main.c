@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <stdbool.h>
 #include "main.h"
+#include "dump.h"
 #include "inode.h"
 #include "space.h"
+#include "command.h"
 
 int main() {
     int main_options, partition_size;
@@ -13,7 +13,7 @@ int main() {
     printf(" 2. create new partition in memory\n");
     scanf("%d", &main_options);
     if(main_options == 1) {//讀取檔案
-        file_system = read_dump();
+        file_system = (FileSystem *)read_dump();
         //todo:需要一個指標重新定位的方法
         if (strcmp(file_system->super_block->password, "mmslab406") != 0) {
             printf("密碼錯誤\n");
@@ -31,52 +31,18 @@ int main() {
                 printf("Error: Partition size must not exceed 1GB.\n");
             } else {           
                 partition_size = (partition_size / 1024) * 1024;// 如果不是 1024 的倍數，向下取整
-                printf("Valid partition size = %d bytes\n", partition_size);
+                printf("partition size = %d bytes\n", partition_size);
                 break;
             }
         }
-        file_system = init_space(partition_size);//call初始化func 分配空間、建立特殊資訊、分配node
-        //todo:建立Root 
-        
+        file_system = init_space(partition_size);
+        init_root(file_system);//建立root
         Interaction(file_system);
     } else {
-        printf('input error\n');
-        return;
+        printf("input error\n");
+        return 0;
     }
 
-}
-
-int get_command_code(const char *input) {
-    if (strcmp(input, "ls") == 0) return 1;
-    if (strcmp(input, "cd") == 0) return 2;
-    if (strcmp(input, "rm") == 0) return 3;
-    if (strcmp(input, "mkdir") == 0) return 4;
-    if (strcmp(input, "rmdir") == 0) return 5;
-    if (strcmp(input, "put") == 0) return 6;
-    if (strcmp(input, "get") == 0) return 7;
-    if (strcmp(input, "cat") == 0) return 8;
-    if (strcmp(input, "edit") == 0) return 9;
-    if (strcmp(input, "status") == 0) return 10;
-    if (strcmp(input, "help") == 0) return 11;
-    if (strcmp(input, "exit") == 0) return 12;
-    return 0; // Unknown command
-}
-
-void print_command(void) {
-    printf("List of commands\n");
-    printf("'ls' list directory\n");
-    printf("'cd' change directory\n");
-    printf("'rm' remove\n");
-    printf("'mkdir' make directory\n");
-    printf("'rmdir' remove directory\n");
-    printf("'put' put file into the space\n");
-    printf("'get' get file from the space\n");
-    printf("'cat' show content\n");
-    printf("'edit' edit file with vim\n");
-    printf("'status' show status of space\n");
-    printf("'help' \n");
-    printf("'exit' exit and store img\n");
-    printf('\n');
 }
 
 int Interaction(FileSystem *file_system) {
@@ -84,23 +50,26 @@ int Interaction(FileSystem *file_system) {
     char input[256];
     //首先初始化一個Inode current_path指向root
     Inode *current_path;
-    current_path = 0;//root 也就是buffer的address+block size
-
+    current_path = file_system->inode_table;//root  
+    print_command();
+    while (getchar() != '\n' && getchar() != EOF); //確保輸入區沒有髒資料
     while (loop_flag) {
-        print_command();
+        printf("$ ");
         if (fgets(input, sizeof(input), stdin) == NULL) {
             printf("Error reading input\n");//沒東西
             continue;
         }
+        printf("input:%s\n",input);//todo:刪掉
         input[strcspn(input, "\n")] = '\0';//去掉輸入末尾的換行符    
         char *command = strtok(input, " ");//分割命令和參數
         char *arg = strtok(NULL, " ");
-
+        printf("command:%s\n",command);//todo:刪掉
+        printf("arg:%s\n",arg);//todo:刪掉
         int command_code = get_command_code(command);
 
         switch (command_code) {
             case CMD_LS:
-                //ls();
+                ls(file_system, current_path);
                 //檢查current_path對應的Directory 把KEY全部列出
                 break;
             case CMD_CD://要考慮絕對路徑 
@@ -149,7 +118,7 @@ int Interaction(FileSystem *file_system) {
                 break;
             case CMD_EXIT: //存檔
                 create_dump(file_system);
-                destroy_space(file_system);
+                //destroy_space(file_system);
                 loop_flag = false;
                 break;
             default:
@@ -161,13 +130,3 @@ int Interaction(FileSystem *file_system) {
     return 0;
 }
 
-void status(SuperBlock *status) {
-    printf("partition size:%d\n",status->partition_size);
-    printf("total inodes:%d\n",status->total_inodes);
-    printf("used inodes:%d\n",status->used_inodes);
-    printf("total blocks:%d\n",status->total_blocks);
-    printf("used blocks:%d\n",status->used_blocks);
-    printf("files blocks:%d\n",status->total_data);
-    printf("block size:%d\n",status->block_size);
-    printf("free space:%d\n",status->free_space);
-}
