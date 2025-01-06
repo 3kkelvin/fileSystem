@@ -75,37 +75,42 @@ int Interaction(FileSystem *file_system) {
             case CMD_CD:
                 current_path = cd(file_system, current_path, arg, current_path_text);
                 break;
-            case CMD_RM://要考慮絕對路徑
-                //rm();
-                //檢查current_path對應的Directory 如果有找到 釋放inode空間、釋放block空間、刪除那組Directory 
+            case CMD_RM:
+                rm(file_system, current_path, arg);
                 break;
-            case CMD_MKDIR://要考慮絕對路徑 要考慮多層路徑
+            case CMD_MKDIR:
                 if (arg == NULL) {//沒路徑
                     break;
                 }
-                mkdir(file_system, current_path, arg);
+                my_mkdir(file_system, current_path, arg);
                 break;
-            case CMD_RMDIR://只刪除空目錄 //要考慮絕對路徑 //不能刪除當前目錄
+            case CMD_RMDIR:
                 if (arg == NULL) {//沒路徑
                     break;
                 }
-                rmdir(file_system, current_path, arg);
-                //檢查current_path的Directory 如果有找到 而且對方Directory只有.和.. 釋放inode空間、釋放block空間、刪除那組Directory 
+                my_rmdir(file_system, current_path, arg);
                 break;
             case CMD_PUT:
-                //put();
-                //看dump資料夾有沒有這東西 有的話分配inode 分配block 掛到current_path的Directory裡
+                if (arg == NULL) {//沒檔案
+                    break;
+                }
+                put(file_system, current_path, arg);
                 break;
-            case CMD_GET://要考慮絕對路徑?
-                //get();
-                //檢查current_path的Directory 如果有找到 丟到dump
+            case CMD_GET:
+                if (arg == NULL) {//沒檔案
+                    break;
+                }
+                get(file_system, current_path, arg);
                 break;
-            case CMD_CAT://要考慮絕對路徑?
-                //cat();
+            case CMD_CAT:
+                if (arg == NULL) {//沒檔案
+                    break;
+                }
+                cat(file_system, current_path, arg);
                 //檢查current_path的Directory 如果有找到print出內容
                 break;
             case CMD_EDIT://要考慮絕對路徑?
-                //edit();
+                edit(file_system, current_path, arg);
                 //檢查current_path的Directory 如果有找到 調用珞昱的方法
                 break;
             case CMD_STATUS://列出當前fs資訊
