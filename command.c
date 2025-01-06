@@ -312,7 +312,7 @@ void my_rmdir(FileSystem* fs, Inode *inode, char* arg) {
 
         DirectoryEntry* father_entry = (DirectoryEntry*)(get_block_position(fs, temp_inode->directBlocks[0]) + DirectoryEntrySize);
         int father_inode_index = father_entry->inode_index;
-        Inode *father = get_inode(fs, father_inode_index);
+        Inode* father = get_inode(fs, father_inode_index);
         for (int i = 0; i < BLOCK_NUMBER; ++i) {//從父資料夾移除該資料
             if (father->directBlocks[i] == -1) {//已找完當前路徑下的所有子路徑
                 break;
@@ -368,8 +368,9 @@ void put(FileSystem* fs, Inode *inode, char *arg) {
     fread(fileData, 1, fileSize, file);// 讀取檔案內容
     fclose(file);
     
-    Inode *new_inode;
+    Inode* new_inode;
     new_inode = allocate_inode(fs, true);//新建inode
+    new_inode->size = fileSize;
     if(!write_file_data(fs, new_inode, fileData, fileSize)) {
         printf("寫入失敗");
         return;
@@ -385,4 +386,58 @@ void put(FileSystem* fs, Inode *inode, char *arg) {
     }
     free(fileData);
     printf("File %s successfully added to the file system.\n", arg);
+}
+
+void get(FileSystem* fs, Inode *inode, char *arg) {
+    size_t DirectoryEntrySize = sizeof(DirectoryEntry);
+    int file_index = 0;
+    //找目標檔案
+    for (int i = 0; i < BLOCK_NUMBER; ++i) {
+        if (file_index) {
+            break;
+        }
+        if (inode->directBlocks[i] == -1) {//已找完當前路徑下的所有子路徑
+            printf("找不到檔案");
+            return;//找不到任何檔案/路徑
+        }
+        unsigned char* block_address = get_block_position(fs, inode->directBlocks[i]);
+        int offset = 0;
+        while (offset + DirectoryEntrySize <= BLOCK_SIZE) {//如果空間還夠 檢查下一組key-value位址
+            DirectoryEntry* entry = (DirectoryEntry*)(block_address + offset);
+            if (strcmp(entry->filename, arg) == 0) {
+                file_index = entry->inode_index;
+                break;
+            }
+            offset += DirectoryEntrySize;//指向下一組 
+        }
+    }
+    //讀取資料
+    Inode* file_inode;
+    file_inode = get_inode(fs, file_index);
+    size_t file_size = file_inode->size; 
+    void* buffer = malloc(file_size);
+    if (!buffer) {
+        printf("開不了buffer\n");
+        return;
+    }
+    if (!read_file_data(fs, file_inode, buffer)) {
+        printf("讀取錯誤\n");
+        free(buffer);
+        return;
+    }
+    //寫入真實路徑
+    char filePath[256] = {'\0'};//目標檔案的真實路徑="file_system/dump/"+arg
+    strcat(filePath, "file_system/dump/");
+    strcat(filePath, arg);
+    FILE *outputFile = fopen(filePath, "wb");//打開目標檔案
+    if (!outputFile) {
+        printf("開檔錯誤\n");
+        free(buffer);
+        return;
+    }
+    fwrite(buffer, 1, file_size, outputFile);//寫入檔案資料
+    fclose(outputFile);
+    // 清理
+    free(buffer);
+    printf("File successfully extracted to %s.\n", arg);
 }

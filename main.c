@@ -93,11 +93,9 @@ int Interaction(FileSystem *file_system) {
                 break;
             case CMD_PUT:
                 put(file_system, current_path, arg);
-                //看dump資料夾有沒有這東西 有的話分配inode 分配block 掛到current_path的Directory裡
                 break;
-            case CMD_GET://要考慮絕對路徑?
-                //get();
-                //檢查current_path的Directory 如果有找到 丟到dump
+            case CMD_GET://todo 要考慮絕對路徑?
+                get(file_system, current_path, arg);
                 break;
             case CMD_CAT://要考慮絕對路徑?
                 //cat();

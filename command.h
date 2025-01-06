@@ -24,4 +24,5 @@ void my_rmdir(FileSystem* fs, Inode* inode, char *arg);
 //從真實路徑讀檔案
 void put(FileSystem* fs, Inode *inode, char *arg);
 //寫檔案到真實路徑
+void get(FileSystem* fs, Inode *inode, char *arg);
 #endif
