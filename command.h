@@ -25,4 +25,6 @@ void my_rmdir(FileSystem* fs, Inode* inode, char *arg);
 void put(FileSystem* fs, Inode *inode, char *arg);
 //寫檔案到真實路徑
 void get(FileSystem* fs, Inode *inode, char *arg);
+//print出檔案內容
+void cat(FileSystem* fs, Inode *inode, char *arg);
 #endif

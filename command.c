@@ -441,3 +441,48 @@ void get(FileSystem* fs, Inode *inode, char *arg) {
     free(buffer);
     printf("File successfully extracted to %s.\n", arg);
 }
+
+void cat(FileSystem* fs, Inode *inode, char *arg) {
+    size_t DirectoryEntrySize = sizeof(DirectoryEntry);
+    int file_index = 0;
+    //找目標檔案
+    for (int i = 0; i < BLOCK_NUMBER; ++i) {
+        if (file_index) {
+            break;
+        }
+        if (inode->directBlocks[i] == -1) {//已找完當前路徑下的所有子路徑
+            printf("找不到檔案");
+            return;//找不到任何檔案/路徑
+        }
+        unsigned char* block_address = get_block_position(fs, inode->directBlocks[i]);
+        int offset = 0;
+        while (offset + DirectoryEntrySize <= BLOCK_SIZE) {//如果空間還夠 檢查下一組key-value位址
+            DirectoryEntry* entry = (DirectoryEntry*)(block_address + offset);
+            if (strcmp(entry->filename, arg) == 0) {
+                file_index = entry->inode_index;
+                break;
+            }
+            offset += DirectoryEntrySize;//指向下一組 
+        }
+    }
+    //讀取資料
+    Inode* file_inode;
+    file_inode = get_inode(fs, file_index);
+    size_t file_size = file_inode->size; 
+    void* buffer = malloc(file_size);
+    if (!buffer) {
+        printf("開不了buffer\n");
+        return;
+    }
+    if (!read_file_data(fs, file_inode, buffer)) {
+        printf("讀取錯誤\n");
+        free(buffer);
+        return;
+    }
+    // 印出檔案內容到命令提示字元
+    fwrite(buffer, 1, file_size, stdout);
+    printf("\n");
+
+    // 清理
+    free(buffer);
+}

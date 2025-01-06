@@ -97,8 +97,8 @@ int Interaction(FileSystem *file_system) {
             case CMD_GET://todo 要考慮絕對路徑?
                 get(file_system, current_path, arg);
                 break;
-            case CMD_CAT://要考慮絕對路徑?
-                //cat();
+            case CMD_CAT://todo 要考慮絕對路徑?
+                cat(file_system, current_path, arg);
                 //檢查current_path的Directory 如果有找到print出內容
                 break;
             case CMD_EDIT://要考慮絕對路徑?
