@@ -29,4 +29,6 @@ void put(FileSystem* fs, Inode *inode, char *arg);
 void get(FileSystem* fs, Inode *inode, char *arg);
 //print出檔案內容
 void cat(FileSystem* fs, Inode *inode, char *arg);
+//編輯檔案
+void edit(FileSystem* fs, Inode *inode, char *arg);
 #endif

@@ -110,7 +110,7 @@ int Interaction(FileSystem *file_system) {
                 //檢查current_path的Directory 如果有找到print出內容
                 break;
             case CMD_EDIT://要考慮絕對路徑?
-                //edit();
+                edit(file_system, current_path, arg);
                 //檢查current_path的Directory 如果有找到 調用珞昱的方法
                 break;
             case CMD_STATUS://列出當前fs資訊
