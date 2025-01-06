@@ -80,7 +80,7 @@ void write_indirect_block(FileSystem* fs, int* indirectBlock, const char** data_
 void read_block(FileSystem* fs, int block_index, void* buffer, size_t size);
 
 // 讀取指定inode的資料，輸入buffer指標儲存資料，返回讀取的資料大小
-size_t read_file_data(FileSystem* fs, Inode* inode, void* buffer, size_t size);
+size_t read_file_data(FileSystem* fs, Inode* inode, void* buffer);
 
 // private
 // 讀取direct block
