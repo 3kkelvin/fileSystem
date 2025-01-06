@@ -93,9 +93,7 @@ void read_direct_block(FileSystem* fs, int* directBlocks, char** buf_ptr, size_t
 // 讀取indirect block
 void read_indirect_block(FileSystem* fs, int* indirectBlock, char** buf_ptr, size_t* remaining_size, size_t* total_read);
 
-bool save_to_dumpfile(FileSystem* fs, const char* filename);
-
-FileSystem* load_filesystem(const char* filename);
+FileSystem* load_filesystem(const unsigned char* data);
 
 void destroy_space(FileSystem* fs);
 
