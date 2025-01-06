@@ -826,6 +826,7 @@ void edit(FileSystem* fs, Inode *inode, char *arg) {
     size_t DirectoryEntrySize = sizeof(DirectoryEntry);
     bool keep_find = true;
     int file_index;
+    DirectoryEntry* edit_entry;
     while (token != NULL) {
         if (strcmp(token, ".") == 0 || strcmp(token, "..") == 0 ) {
             printf("錯誤的路徑");
@@ -851,6 +852,7 @@ void edit(FileSystem* fs, Inode *inode, char *arg) {
                 if (strcmp(file_name, entry->filename) == 0) {//找到同名檔案
                     found_next_path = true;   
                     file_index = entry->inode_index;
+                    edit_entry = entry;
                     break;
                 }
                 if (strcmp(token, entry->filename) == 0) {//找到同名資料夾
@@ -881,11 +883,13 @@ void edit(FileSystem* fs, Inode *inode, char *arg) {
         free(buffer);
         return;
     }
-    edit_buffer_with_vim((void**)&buffer, &file_size);
+    edit_buffer_with_vim((void**)&buffer, &file_size);//修改
     
-    fwrite(buffer, 1, file_size, stdout);//印出檔案內容
-    printf("\n");
-
-    //清理
+    Inode* new_inode;//新建inode
+    new_inode = allocate_inode(fs, true);
+    new_inode->size = file_size;
+    write_file_data(fs, new_inode, buffer, file_size);//存入修改後檔案
+    edit_entry->inode_index = new_inode->inode_index;//替換inode到新檔案
+    free_inode(fs, file_index);//釋放舊的
     free(buffer);
 }
