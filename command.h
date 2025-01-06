@@ -17,6 +17,8 @@ void ls(FileSystem* fs, Inode* inode);
 void read_directory_entries(FileSystem* fs, int block_index);
 //跳至該路徑
 Inode* cd(FileSystem* fs, Inode* inode, char *arg, char *text);
+//刪除檔案
+void rm(FileSystem* fs, Inode *inode, char *arg);
 //創路徑
 void my_mkdir(FileSystem* fs, Inode* inode, char *arg);
 //刪路徑

@@ -152,6 +152,117 @@ Inode* cd(FileSystem* fs, Inode* inode, char *arg, char *text) {
     return inode;//路徑不完全存在
 }
 
+void rm(FileSystem* fs, Inode *inode, char* arg) {
+    Inode *temp_inode = (Inode *)malloc(sizeof(Inode));
+    memcpy(temp_inode, inode, sizeof(Inode));//複製inode
+    size_t length = strlen(arg)+1;
+    char temp_arg[length];
+    strncpy(temp_arg, arg, length);//複製路徑到字串陣列
+    char* token = strtok(temp_arg, "/");//切割陣列
+    //取得檔案名
+    char file_name[MAX_FILENAME_LENGTH];
+    const char* last_slash = strrchr(arg, '/');
+    if (strrchr(arg, '/') != NULL) {
+        strcpy(file_name, last_slash + 1);
+    } else {
+        strcpy(file_name, arg);
+    }
+
+    if (arg[0] == '/') {//絕對路徑
+        if (strcmp(token, "root") != 0) {
+            printf("錯誤的絕對路徑");
+            return;
+        }
+        temp_inode = get_inode(fs, 0);//root
+        token = strtok(NULL, "/");//第二段路徑
+        if (token == NULL) {
+            printf("不能刪除root");
+            return;
+        }  
+    }
+    //尋找已存在的路徑
+    size_t DirectoryEntrySize = sizeof(DirectoryEntry);
+    bool keep_find = true;
+    int file_index;
+    while (token != NULL) {
+        if (strcmp(token, ".") == 0 || strcmp(token, "..") == 0 ) {
+            printf("不可刪除自己或父路徑");
+            return;
+        }
+        bool found_next_path = false;
+        for (int i = 0; i < BLOCK_NUMBER; ++i) {
+            if (found_next_path) {//找到下一層路徑
+                break;
+            }
+            if (temp_inode->directBlocks[i] == -1) {//已找完當前路徑下的所有子路徑
+                keep_find = false;//找不到 直接跳出while
+                break;
+            }
+            unsigned char* block_address = get_block_position(fs, temp_inode->directBlocks[i]);
+            int offset = 0;
+            while (offset + DirectoryEntrySize <= BLOCK_SIZE) {//如果空間還夠 檢查下一組key-value位址  
+                DirectoryEntry* entry = (DirectoryEntry*)(block_address + offset);
+                bool self_or_father = (strcmp(entry->filename, ".") == 0 || strcmp(entry->filename, "..") == 0);//自己或父路徑 有可能指向root(0) 所以要建立特例
+                if (!self_or_father && entry->inode_index == 0) {//如果為空跳出
+                    break;
+                } 
+                if (strcmp(file_name, entry->filename) == 0) {//找到同名檔案
+                    found_next_path = true;   
+                    file_index = entry->inode_index;
+                    break;
+                }
+                if (strcmp(token, entry->filename) == 0) {//找到同名資料夾
+                    found_next_path = true;
+                    temp_inode = get_inode(fs, entry->inode_index);//指向下一層
+                    break;
+                }
+                offset += DirectoryEntrySize;//指向下一組
+            }
+    
+        }
+        if (!keep_find) {
+            break;//沒找到
+        }
+        token = strtok(NULL, "/");
+    }
+    
+    Inode* file_inode = get_inode(fs, file_index);
+    if(token == NULL) {//rm的目的地真的存在
+        if(file_inode->isFile != true) {//如果不是檔案
+            return;
+        }
+        //執行刪除 釋放inode空間、釋放block空間、刪除父路徑那組Directory
+        bool is_delete = false;
+        for (int i = 0; i < BLOCK_NUMBER; ++i) {//從父資料夾移除該資料
+            if (temp_inode->directBlocks[i] == -1) {//已找完當前路徑下的所有子路徑
+                break;
+            }
+            unsigned char* block_address = get_block_position(fs, temp_inode->directBlocks[i]);
+            int offset = 0;
+            while (offset + DirectoryEntrySize <= BLOCK_SIZE) {//如果空間還夠 檢查下一組key-value位址  
+                DirectoryEntry* entry = (DirectoryEntry*)(block_address + offset);
+                if (entry->inode_index == file_inode->inode_index) {//找到子資料夾 刪除路徑
+                    entry->inode_index = -1;
+                    memset(entry->filename, 0, sizeof(entry->filename));
+                    is_delete = true;
+                    break;
+                } 
+                offset += DirectoryEntrySize;//指向下一組 
+            }
+        }
+        if(!is_delete) {
+            printf("刪除失敗:父資料夾");
+            return;
+        }
+        is_delete = free_inode(fs, temp_inode->inode_index);//釋放檔案inode
+        if(!is_delete) {
+            printf("刪除失敗:檔案");
+            return;
+        }
+    }
+    return;
+}
+
 void my_mkdir(FileSystem* fs, Inode *inode, char* arg) {
     Inode *temp_inode = (Inode *)malloc(sizeof(Inode));
     memcpy(temp_inode, inode, sizeof(Inode));//複製inode
