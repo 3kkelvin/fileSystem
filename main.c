@@ -96,13 +96,13 @@ int Interaction(FileSystem *file_system) {
                 }
                 put(file_system, current_path, arg);
                 break;
-            case CMD_GET://todo 要考慮絕對路徑?
+            case CMD_GET:
                 if (arg == NULL) {//沒檔案
                     break;
                 }
                 get(file_system, current_path, arg);
                 break;
-            case CMD_CAT://todo 要考慮絕對路徑?
+            case CMD_CAT:
                 if (arg == NULL) {//沒檔案
                     break;
                 }
