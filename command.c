@@ -29,10 +29,11 @@ int get_command_code(const char *input) {
     if (strcmp(input, "put") == 0) return 6;
     if (strcmp(input, "get") == 0) return 7;
     if (strcmp(input, "cat") == 0) return 8;
-    if (strcmp(input, "edit") == 0) return 9;
-    if (strcmp(input, "status") == 0) return 10;
-    if (strcmp(input, "help") == 0) return 11;
-    if (strcmp(input, "exit") == 0) return 12;
+    if (strcmp(input, "create") == 0) return 9;
+    if (strcmp(input, "edit") == 0) return 10;
+    if (strcmp(input, "status") == 0) return 11;
+    if (strcmp(input, "help") == 0) return 12;
+    if (strcmp(input, "exit") == 0) return 13;
     return 0; // Unknown command
 }
 
@@ -697,6 +698,100 @@ void cat(FileSystem* fs, Inode *inode, char *arg) {
 
     //清理
     free(buffer);
+}
+
+void my_create(FileSystem* fs, Inode *inode, char *arg) {
+    Inode *temp_inode = (Inode *)malloc(sizeof(Inode));
+    memcpy(temp_inode, inode, sizeof(Inode));//複製inode
+    size_t length = strlen(arg)+1;
+    char temp_arg[length];
+    strncpy(temp_arg, arg, length);//複製路徑到字串陣列
+    char* token = strtok(temp_arg, "/");//切割陣列
+    //取得檔案名
+    char file_name[MAX_FILENAME_LENGTH];
+    const char* last_slash = strrchr(arg, '/');
+    if (strrchr(arg, '/') != NULL) {
+        strcpy(file_name, last_slash + 1);
+    } else {
+        strcpy(file_name, arg);
+    }
+
+    if (arg[0] == '/') {//絕對路徑
+        if (strcmp(token, "root") != 0) {
+            printf("錯誤的絕對路徑");
+            return;
+        }
+        temp_inode = get_inode(fs, 0);//root
+        token = strtok(NULL, "/");//第二段路徑
+        if (token == NULL) {
+            printf("缺少檔案名稱");
+            return;
+        }  
+    }
+    //尋找已存在的路徑
+    size_t DirectoryEntrySize = sizeof(DirectoryEntry);
+    bool keep_find = true;
+    int file_index;
+    while (token != NULL) {
+        if (strcmp(token, ".") == 0 || strcmp(token, "..") == 0 ) {
+            printf("錯誤的路徑");
+            return;
+        }
+        bool found_next_path = false;
+        for (int i = 0; i < BLOCK_NUMBER; ++i) {
+            if (found_next_path) {//找到下一層路徑
+                break;
+            }
+            if (temp_inode->directBlocks[i] == -1) {//已找完當前路徑下的所有子路徑
+                keep_find = false;//找不到 直接跳出while
+                break;
+            }
+            unsigned char* block_address = get_block_position(fs, temp_inode->directBlocks[i]);
+            int offset = 0;
+            while (offset + DirectoryEntrySize <= BLOCK_SIZE) {//如果空間還夠 檢查下一組key-value位址  
+                DirectoryEntry* entry = (DirectoryEntry*)(block_address + offset);
+                bool self_or_father = (strcmp(entry->filename, ".") == 0 || strcmp(entry->filename, "..") == 0);//自己或父路徑 有可能指向root(0) 所以要建立特例
+                if (!self_or_father && entry->inode_index == 0) {//如果為空跳出
+                    break;
+                } 
+                if (strcmp(file_name, entry->filename) == 0) {//找到同名檔案   
+                    return;
+                }
+                if (strcmp(token, entry->filename) == 0) {//找到同名資料夾
+                    found_next_path = true;
+                    temp_inode = get_inode(fs, entry->inode_index);//指向下一層
+                    break;
+                }
+                offset += DirectoryEntrySize;//指向下一組
+            }
+        }
+        if (!keep_find) {
+            break;//沒找到
+        }
+        token = strtok(NULL, "/");
+    }
+    if(strcmp(token, file_name) == 0)//代表前面的路徑都有符合
+    {
+        Inode* new_inode;
+        new_inode = allocate_inode(fs, true);//新建inode
+        new_inode->size = 1;
+        const char empty_string[] = "\0";
+        if(!write_file_data(fs, new_inode, empty_string, 1)) {
+            printf("寫入失敗");
+            return;
+        }
+        DirectoryEntry new_directory;//父資料夾指向新檔案
+        strncpy(new_directory.filename, file_name, MAX_FILENAME_LENGTH - 1);
+        new_directory.inode_index = new_inode->inode_index;  
+        for (int i = 0; i < BLOCK_NUMBER; ++i) {
+            if (temp_inode->directBlocks[i] == -1) {
+                write_directory_entry(fs, temp_inode, temp_inode->directBlocks[i-1], &new_directory);//寫入父資料夾
+                break;
+            }
+        }
+        printf("File %s successfully added to the file system.\n", arg);
+    }
+    return;
 }
 
 void edit(FileSystem* fs, Inode *inode, char *arg) {

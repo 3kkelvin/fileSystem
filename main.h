@@ -15,10 +15,11 @@ typedef enum {
     CMD_PUT,
     CMD_GET,
     CMD_CAT,
+    CMD_CREATE,
     CMD_EDIT,
     CMD_STATUS,
     CMD_HELP,
-    CMD_EXIT
+    CMD_EXIT,
 } CommandCode;
 
 typedef struct {

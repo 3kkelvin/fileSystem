@@ -109,6 +109,10 @@ int Interaction(FileSystem *file_system) {
                 cat(file_system, current_path, arg);
                 //檢查current_path的Directory 如果有找到print出內容
                 break;
+            case CMD_CREATE://要考慮絕對路徑?
+                my_create(file_system, current_path, arg);
+                //檢查current_path的Directory 如果有找到 調用珞昱的方法
+                break;
             case CMD_EDIT://要考慮絕對路徑?
                 edit(file_system, current_path, arg);
                 //檢查current_path的Directory 如果有找到 調用珞昱的方法
