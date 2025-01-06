@@ -1,5 +1,6 @@
 #include "space.h"
 #include "inode.h"
+
 FileSystem* init_space(int partition_size) {
     // 1. 基本檢查和分配
     if (partition_size <= 0 || partition_size % BLOCK_SIZE != 0) {
@@ -424,5 +425,86 @@ void read_indirect_block(FileSystem* fs, int* indirectBlock, char** buf_ptr, siz
             read_direct_block(fs, indirect_block_ptr, buf_ptr, remaining_size, total_read);
         }
         block_index++;
+    }
+}
+
+bool save_to_dumpfile(FileSystem* fs, const char* filename) {
+    if (fs == NULL || fs->raw_space == NULL) {
+        return false;
+    }
+
+    // 打開dump文件
+    FILE* dump_file = fopen(filename, "wb");
+    if (dump_file == NULL) {
+        return false;
+    }
+
+    // 寫入整個文件系統空間
+    size_t written = fwrite(fs->raw_space, 1, fs->super_block->partition_size, dump_file);
+    
+    // 關閉文件
+    fclose(dump_file);
+    
+    // 檢查是否完整寫入
+    return (written == fs->super_block->partition_size);
+}
+
+FileSystem* load_filesystem(const char* filename) {
+    // 1. 先打開dump文件讀取partition_size
+    FILE* dump_file = fopen(filename, "rb");
+    if (dump_file == NULL) {
+        return NULL;
+    }
+
+    // 2. 讀取SuperBlock來獲取partition_size
+    SuperBlock temp_sb;
+    if (fread(&temp_sb, sizeof(SuperBlock), 1, dump_file) != 1) {
+        fclose(dump_file);
+        return NULL;
+    }
+
+    // 3. 分配新的文件系統結構
+    FileSystem* fs = (FileSystem*)malloc(sizeof(FileSystem));
+    if (!fs) {
+        fclose(dump_file);
+        return NULL;
+    }
+
+    // 4. 分配原始空間
+    fs->raw_space = (unsigned char*)malloc(temp_sb.partition_size);
+    if (!fs->raw_space) {
+        free(fs);
+        fclose(dump_file);
+        return NULL;
+    }
+
+    // 5. 重新定位到文件開頭並讀取整個文件系統空間
+    fseek(dump_file, 0, SEEK_SET); // 回到一開始
+    size_t read_size = fread(fs->raw_space, 1, temp_sb.partition_size, dump_file);
+    if (read_size != temp_sb.partition_size) {
+        free(fs->raw_space);
+        free(fs);
+        fclose(dump_file);
+        return NULL;
+    }
+
+    // 6. 設置其他指針
+    int metadata_blocks = fs->super_block->system_blocks - fs->super_block->total_inodes;
+    fs->super_block = (SuperBlock*)fs->raw_space;
+    fs->inode_bitmap = fs->raw_space + sizeof(SuperBlock);
+    fs->data_bitmap = fs->inode_bitmap + (fs->super_block->total_inodes + 7) / 8;
+    fs->inode_table = (Inode*)(fs->raw_space + (metadata_blocks * BLOCK_SIZE));
+    fs->data_blocks = fs->raw_space + (fs->super_block->system_blocks * BLOCK_SIZE);
+
+    fclose(dump_file);
+    return fs;
+}
+
+void destroy_space(FileSystem* fs) {
+    if (fs) {
+        if (fs->raw_space) {
+            free(fs->raw_space);
+        }
+        free(fs);
     }
 }

@@ -1,9 +1,12 @@
 // space.h
 #ifndef SPACE_H
 #define SPACE_H
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
 #define BLOCK_SIZE 1024  // 1KB per block
 typedef struct SuperBlock SuperBlock;
 typedef struct Inode Inode;
@@ -89,5 +92,11 @@ void read_direct_block(FileSystem* fs, int* directBlocks, char** buf_ptr, size_t
 // private
 // 讀取indirect block
 void read_indirect_block(FileSystem* fs, int* indirectBlock, char** buf_ptr, size_t* remaining_size, size_t* total_read);
+
+bool save_to_dumpfile(FileSystem* fs, const char* filename);
+
+FileSystem* load_filesystem(const char* filename);
+
+void destroy_space(FileSystem* fs);
 
 #endif
