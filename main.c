@@ -83,17 +83,16 @@ int Interaction(FileSystem *file_system) {
                 if (arg == NULL) {//沒路徑
                     break;
                 }
-                mkdir(file_system, current_path, arg);
+                my_mkdir(file_system, current_path, arg);
                 break;
-            case CMD_RMDIR://只刪除空目錄 //要考慮絕對路徑 //不能刪除當前目錄
+            case CMD_RMDIR:
                 if (arg == NULL) {//沒路徑
                     break;
                 }
-                rmdir(file_system, current_path, arg);
-                //檢查current_path的Directory 如果有找到 而且對方Directory只有.和.. 釋放inode空間、釋放block空間、刪除那組Directory 
+                my_rmdir(file_system, current_path, arg);
                 break;
             case CMD_PUT:
-                //put();
+                put(file_system, current_path, arg);
                 //看dump資料夾有沒有這東西 有的話分配inode 分配block 掛到current_path的Directory裡
                 break;
             case CMD_GET://要考慮絕對路徑?

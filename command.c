@@ -152,7 +152,7 @@ Inode* cd(FileSystem* fs, Inode* inode, char *arg, char *text) {
     return inode;//路徑不完全存在
 }
 
-void mkdir(FileSystem* fs, Inode *inode, char* arg) {
+void my_mkdir(FileSystem* fs, Inode *inode, char* arg) {
     Inode *temp_inode = (Inode *)malloc(sizeof(Inode));
     memcpy(temp_inode, inode, sizeof(Inode));//複製inode
     size_t length = strlen(arg)+1;
@@ -208,8 +208,8 @@ void mkdir(FileSystem* fs, Inode *inode, char* arg) {
         Inode *new_inode; 
         new_inode = allocate_inode(fs, false);//新建inode
         int block_index = allocate_single_block_for_inode(fs, new_inode);//分配block
-        DirectoryEntry self_directory = { ".", new_inode->inode_index};//新建指向自己的key-value
-        DirectoryEntry father_directory = { "..", temp_inode->inode_index};//新建指向父資料夾的key-value
+        DirectoryEntry self_directory = {".", new_inode->inode_index};//新建指向自己的key-value
+        DirectoryEntry father_directory = {"..", temp_inode->inode_index};//新建指向父資料夾的key-value
         write_directory_entry(fs, new_inode, block_index, &self_directory);
         write_directory_entry(fs, new_inode, block_index, &father_directory);
 
@@ -227,7 +227,7 @@ void mkdir(FileSystem* fs, Inode *inode, char* arg) {
     }
 }
 
-void rmdir(FileSystem* fs, Inode *inode, char* arg) {
+void my_rmdir(FileSystem* fs, Inode *inode, char* arg) {
     Inode *temp_inode = (Inode *)malloc(sizeof(Inode));
     memcpy(temp_inode, inode, sizeof(Inode));//複製inode
     size_t length = strlen(arg)+1;
@@ -343,3 +343,46 @@ void rmdir(FileSystem* fs, Inode *inode, char* arg) {
     return;
 }
 
+void put(FileSystem* fs, Inode *inode, char *arg) {
+    char filePath[256] = {'\0'};//目標檔案的真實路徑="file_system/"+arg
+    strcat(filePath, "file_system/");
+    strcat(filePath, arg);
+    struct stat buffer;
+    if (stat(filePath, &buffer) != 0) {// 確認檔案存在
+        printf("檔案不存在:%s",filePath);
+        return;
+    }
+    FILE *file = fopen(filePath, "rb");// 打開檔案
+    if (!file) {
+        printf("檔案打不開");
+        return;
+    }
+    size_t fileSize = buffer.st_size;//取得檔案大小
+    
+    void *fileData = malloc(fileSize);
+    if (!fileData) {
+        printf("Error: Memory allocation failed.\n");
+        fclose(file);
+        return;
+    }
+    fread(fileData, 1, fileSize, file);// 讀取檔案內容
+    fclose(file);
+    
+    Inode *new_inode;
+    new_inode = allocate_inode(fs, true);//新建inode
+    if(!write_file_data(fs, new_inode, fileData, fileSize)) {
+        printf("寫入失敗");
+        return;
+    }
+    DirectoryEntry new_directory;//父資料夾指向新檔案
+    strncpy(new_directory.filename, arg, MAX_FILENAME_LENGTH - 1);
+    new_directory.inode_index = new_inode->inode_index;  
+    for (int i = 0; i < BLOCK_NUMBER; ++i) {
+        if (inode->directBlocks[i] == -1) {
+            write_directory_entry(fs, inode, inode->directBlocks[i-1], &new_directory);//寫入父資料夾
+            break;
+        }
+    }
+    free(fileData);
+    printf("File %s successfully added to the file system.\n", arg);
+}
