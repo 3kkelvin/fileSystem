@@ -31,4 +31,6 @@ void get(FileSystem* fs, Inode *inode, char *arg);
 void cat(FileSystem* fs, Inode *inode, char *arg);
 //編輯檔案
 void edit(FileSystem* fs, Inode *inode, char *arg);
+//新增檔案
+void my_create(FileSystem* fs, Inode *inode, char *arg);
 #endif
