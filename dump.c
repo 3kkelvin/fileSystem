@@ -7,9 +7,9 @@ bool create_dump(FileSystem *fs) {
     char password[PASSWORD_SIZE];
 
     // 輸入密碼
-    printf("請設定加密密碼：");
+    printf("Please enter the password: ");
     if (fgets(password, PASSWORD_SIZE, stdin) == NULL) {
-        perror("輸入密碼失敗");
+        perror("Password input failed");
         return false;
     }
     password[strcspn(password, "\n")] = '\0';
@@ -22,13 +22,13 @@ bool save_to_dumpfile(FileSystem* fs, const char* filename, const char *password
     // 打開dump文件
     FILE* dump_file = fopen(filename, "wb");
     if (dump_file == NULL) {
-        perror("無法創建 dump file");
+        perror("Cannot open dump file");
         return false;
     }
 
     unsigned char *encrypted_data = (unsigned char *)malloc(fs->super_block->partition_size);
     if (!encrypted_data) {
-        perror("加密空間分配失敗");
+        perror("Memory allocation failed");
         fclose(dump_file);
         return false;
     }
@@ -37,7 +37,7 @@ bool save_to_dumpfile(FileSystem* fs, const char* filename, const char *password
     
     // 寫入加密數據
     if (fwrite(encrypted_data, 1, fs->super_block->partition_size, dump_file) != fs->super_block->partition_size) {
-        perror("寫入加密數據失敗");
+        perror("Failed to write encrypted data");
         free(encrypted_data);
         fclose(dump_file);
         return false;
@@ -65,9 +65,9 @@ FileSystem *read_dump() {
     char password[PASSWORD_SIZE];
 
     // 輸入密碼
-    printf("請輸入解密密碼：");
+    printf("Please enter the password: ");
     if (fgets(password, PASSWORD_SIZE, stdin) == NULL) {
-        perror("輸入密碼失敗");
+        perror("Password input failed");
         return NULL;
     }
     password[strcspn(password, "\n")] = '\0';
@@ -80,7 +80,7 @@ FileSystem *read_dump() {
     //檢查是否解碼成功
     SuperBlock *sb = (SuperBlock *)decrypted_data;
     if (strcmp(sb->password, "mmslab406") != 0) {
-        printf("密碼錯誤\n");
+        printf("Password is incorrect\n");
         free(decrypted_data);
         return NULL;
     }
@@ -93,7 +93,7 @@ FileSystem *read_dump() {
 unsigned char *load_memory(const char *password) {
     FILE *file = fopen("my_fs.dump", "rb");
     if (!file) {
-        perror("無法打開 dump file");
+        perror("Cannot open dump file");
         return NULL;
     }
 
@@ -104,13 +104,13 @@ unsigned char *load_memory(const char *password) {
 
     unsigned char *encrypted_data = (unsigned char *)malloc(file_size);
     if (!encrypted_data) {
-        perror("記憶體分配失敗");
+        perror("Memory allocation failed");
         fclose(file);
         return NULL;
     }
 
     if (fread(encrypted_data, 1, file_size, file) != file_size) {
-        perror("讀取加密數據失敗");
+        perror("Failed to read encrypted data");
         free(encrypted_data);
         fclose(file);
         return NULL;
