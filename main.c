@@ -14,7 +14,6 @@ int main() {
     scanf("%d", &main_options);
     if(main_options == 1) {//讀取檔案
         file_system = (FileSystem *)read_dump();
-        //todo:需要一個指標重新定位的方法
         if (strcmp(file_system->super_block->password, "mmslab406") != 0) {
             printf("密碼錯誤\n");
         } else {

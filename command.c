@@ -13,6 +13,7 @@ void print_command(void) {
     printf("'put' put file into the space\n");
     printf("'get' get file from the space\n");
     printf("'cat' show content\n");
+    printf("'create' create an empty file\n");
     printf("'edit' edit file with vim\n");
     printf("'status' show status of space\n");
     printf("'help' \n");
@@ -57,7 +58,6 @@ void ls(FileSystem* fs, Inode* inode) {
         }
         read_directory_entries(fs, inode->directBlocks[i]);
     }
-    //todo:處理多重block
     printf("\n");
 }
 //讀取一個block內的所有檔案/路徑名並print出
@@ -775,7 +775,7 @@ void my_create(FileSystem* fs, Inode *inode, char *arg) {
         Inode* new_inode;
         new_inode = allocate_inode(fs, true);//新建inode
         new_inode->size = 1;
-        const char empty_string[] = "\0";
+        const char empty_string[] = " ";
         if(!write_file_data(fs, new_inode, empty_string, 1)) {
             printf("寫入失敗");
             return;
@@ -884,7 +884,6 @@ void edit(FileSystem* fs, Inode *inode, char *arg) {
         return;
     }
     edit_buffer_with_vim((void**)&buffer, &file_size);//修改
-    
     Inode* new_inode;//新建inode
     new_inode = allocate_inode(fs, true);
     new_inode->size = file_size;

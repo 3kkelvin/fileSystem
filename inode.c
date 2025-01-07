@@ -2,8 +2,6 @@
 #include "space.h"
 //初始化一個root
 void init_root(FileSystem* fs) {
-    //todo?檢查現在是否已經有root了?
-
     Inode *root; 
     root = allocate_inode(fs, false);//新建inode
     int block_index = allocate_single_block_for_inode(fs, root);//分配block
