@@ -62,12 +62,12 @@ int Interaction(FileSystem *file_system) {
             printf("Error reading input\n");//沒東西
             continue;
         }
-        printf("input:%s\n",input);//todo:刪掉
+        //printf("input:%s\n",input);//todo:刪掉
         input[strcspn(input, "\n")] = '\0';//去掉輸入末尾的換行符    
         char *command = strtok(input, " ");//分割命令和參數
         char *arg = strtok(NULL, " ");
-        printf("command:%s\n",command);//todo:刪掉
-        printf("arg:%s\n",arg);//todo:刪掉
+        //printf("command:%s\n",command);//todo:刪掉
+        //printf("arg:%s\n",arg);//todo:刪掉
         int command_code = get_command_code(command);
 
         switch (command_code) {
