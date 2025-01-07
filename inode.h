@@ -4,7 +4,7 @@
 
 #define MAX_FILES 100
 #define MAX_FILENAME_LENGTH 60//檔名長度上限 包含副檔名 先設60確保block塞得下16個DirectoryEntry
-#define BLOCK_NUMBER 16 
+#define BLOCK_NUMBER 64 
 typedef struct FileSystem FileSystem;
 //Inode 存Metadata
 typedef struct Inode{
@@ -12,9 +12,9 @@ typedef struct Inode{
     bool isFile;                                  // 是檔案還是資料夾
     bool isUsed;                                  // 是否正在使用
     int size;                                     // 檔案大小
-    int directBlocks[BLOCK_NUMBER];              // 直接指向的Block
-    int indirectBlock[BLOCK_NUMBER];             // 間接指向的Block
-    int doubleIndirectBlock[BLOCK_NUMBER];       // 雙重間接指向的Block
+    int directBlocks[BLOCK_NUMBER];              // 直接指向的Block，最大資料量 ≈ 64KB
+    int indirectBlock[BLOCK_NUMBER];             // 間接指向的Block，最大資料量 ≈ 16MB
+    //Inode 總大小不能超過16.064MB 也就是 16064 Block（保守估計）
 } Inode;
 
 //只有資料夾有的字典 Key為文件名 value為Inode索引 用來維護資料夾上下級

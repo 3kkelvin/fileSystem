@@ -12,10 +12,13 @@ int main() {
     printf(" 1. loads from file\n");
     printf(" 2. create new partition in memory\n");
     scanf("%d", &main_options);
+
+    while (getchar() != '\n' && getchar() != EOF); 
+
     if(main_options == 1) {//讀取檔案
-        file_system = (FileSystem *)read_dump();
-        if (strcmp(file_system->super_block->password, "mmslab406") != 0) {
-            printf("密碼錯誤\n");
+        file_system = read_dump();
+        if (file_system == NULL) {
+            printf("載入檔案失敗\n");
         } else {
             printf("密碼正確\n");
             Interaction(file_system);
@@ -36,6 +39,7 @@ int main() {
         }
         file_system = init_space(partition_size);
         init_root(file_system);//建立root
+        while (getchar() != '\n' && getchar() != EOF); 
         Interaction(file_system);
     } else {
         printf("input error\n");
@@ -52,7 +56,6 @@ int Interaction(FileSystem *file_system) {
     Inode *current_path;
     current_path = get_inode(file_system, 0);//root  
     print_command();
-    while (getchar() != '\n' && getchar() != EOF); //確保輸入區沒有髒資料
     while (loop_flag) {
         printf("%s/ $ ",current_path_text);
         if (fgets(input, sizeof(input), stdin) == NULL) {
@@ -122,11 +125,20 @@ int Interaction(FileSystem *file_system) {
             case CMD_HELP:
                 print_command();//重新print出能用的指令
                 break;
-            case CMD_EXIT: //存檔
-                create_dump(file_system);
-                //destroy_space(file_system);
-                loop_flag = false;
+            case CMD_EXIT: { //存檔
+                bool result;
+                result = create_dump(file_system);
+                if (!result) {
+                    printf("存檔失敗\n");
+                }
+                else
+                {
+                    printf("存檔成功\n");
+                    destroy_space(file_system);
+                    loop_flag = false;
+                }
                 break;
+            }
             default:
                 printf("Unknown command\n");
                 break;
