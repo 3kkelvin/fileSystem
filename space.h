@@ -93,8 +93,10 @@ void read_direct_block(FileSystem* fs, int* directBlocks, char** buf_ptr, size_t
 // 讀取indirect block
 void read_indirect_block(FileSystem* fs, int* indirectBlock, char** buf_ptr, size_t* remaining_size, size_t* total_read);
 
-FileSystem* load_filesystem(const unsigned char* data);
+// 設定系統指標
+FileSystem* load_filesystem(unsigned char* data);
 
+// 釋放系統指標
 void destroy_space(FileSystem* fs);
 
 #endif

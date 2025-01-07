@@ -428,8 +428,7 @@ void read_indirect_block(FileSystem* fs, int* indirectBlock, char** buf_ptr, siz
     }
 }
 
-FileSystem* load_filesystem(const unsigned char* data) {
-    // 1. 分配新的文件系統結構
+FileSystem* load_filesystem(unsigned char* data) {
     FileSystem* fs = (FileSystem*)malloc(sizeof(FileSystem));
     if (!fs) {
         return NULL;
@@ -439,10 +438,10 @@ FileSystem* load_filesystem(const unsigned char* data) {
     fs->raw_space = data;
 
     // 3. 設置其他指針
-    int metadata_blocks = fs->super_block->system_blocks - fs->super_block->total_inodes;
     fs->super_block = (SuperBlock*)fs->raw_space;
     fs->inode_bitmap = fs->raw_space + sizeof(SuperBlock);
     fs->data_bitmap = fs->inode_bitmap + (fs->super_block->total_inodes + 7) / 8;
+    int metadata_blocks = fs->super_block->system_blocks - fs->super_block->total_blocks / 10;
     fs->inode_table = (Inode*)(fs->raw_space + (metadata_blocks * BLOCK_SIZE));
     fs->data_blocks = fs->raw_space + (fs->super_block->system_blocks * BLOCK_SIZE);
 

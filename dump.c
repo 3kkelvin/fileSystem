@@ -121,6 +121,3 @@ unsigned char *load_memory(const char *password) {
     
     return encrypted_data;
 }
-
-
-

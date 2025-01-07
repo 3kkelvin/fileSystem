@@ -12,6 +12,9 @@ int main() {
     printf(" 1. loads from file\n");
     printf(" 2. create new partition in memory\n");
     scanf("%d", &main_options);
+
+    while (getchar() != '\n' && getchar() != EOF); 
+
     if(main_options == 1) {//讀取檔案
         file_system = read_dump();
         if (file_system == NULL) {
@@ -36,6 +39,7 @@ int main() {
         }
         file_system = init_space(partition_size);
         init_root(file_system);//建立root
+        while (getchar() != '\n' && getchar() != EOF); 
         Interaction(file_system);
     } else {
         printf("input error\n");
@@ -52,7 +56,6 @@ int Interaction(FileSystem *file_system) {
     Inode *current_path;
     current_path = get_inode(file_system, 0);//root  
     print_command();
-    while (getchar() != '\n' && getchar() != EOF); //確保輸入區沒有髒資料
     while (loop_flag) {
         printf("%s/ $ ",current_path_text);
         if (fgets(input, sizeof(input), stdin) == NULL) {
