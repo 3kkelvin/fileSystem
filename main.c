@@ -18,9 +18,9 @@ int main() {
     if(main_options == 1) {//讀取檔案
         file_system = read_dump();
         if (file_system == NULL) {
-            printf("載入檔案失敗\n");
+            printf("Failed to load dump file\n");
         } else {
-            printf("密碼正確\n");
+            printf("Password is correct\n");
             Interaction(file_system);
         }
     } else if(main_options == 2) {//分配空間
@@ -129,11 +129,11 @@ int Interaction(FileSystem *file_system) {
                 bool result;
                 result = create_dump(file_system);
                 if (!result) {
-                    printf("存檔失敗\n");
+                    printf("Failed to save dump file\n");
                 }
                 else
                 {
-                    printf("存檔成功\n");
+                    printf("Successfully saved dump file\n");
                     destroy_space(file_system);
                     loop_flag = false;
                 }

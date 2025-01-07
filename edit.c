@@ -34,7 +34,7 @@ void edit_buffer_with_vim(void** buffer, size_t* size) {
     if (new_size != *size) {
         void* new_buffer = realloc(*buffer, new_size);
         if (!new_buffer) {
-            printf("重新分配記憶體失敗");
+            printf("Memory reallocation failed\n");
             fclose(temp_file);
             remove(temp_filename);
             return;

@@ -44,9 +44,9 @@ void status(SuperBlock *status) {
     printf("used inodes:%d\n",status->used_inodes);
     printf("total blocks:%d\n",status->total_blocks);
     printf("used blocks:%d\n",status->used_blocks);
-    //printf("files blocks:%d\n",status->total_data);
+    printf("files blocks:%d\n",status->total_blocks - status->system_blocks);
     printf("block size:%d\n",status->block_size);
-    //printf("free space:%d\n",status->free_space);
+    printf("free space:%d\n",(status->total_blocks - status->used_blocks) * status->block_size);
     printf("\n\n");
 }
 
@@ -89,7 +89,7 @@ Inode* cd(FileSystem* fs, Inode* inode, char *arg, char *text) {
 
     if (arg[0] == '/') {//絕對路徑
         if (strcmp(token, "root") != 0) {
-            printf("錯誤的絕對路徑");
+            printf("Wrong absolute path");
             return inode;
         }
         temp_inode = get_inode(fs, 0);//root
@@ -172,13 +172,13 @@ void rm(FileSystem* fs, Inode *inode, char* arg) {
 
     if (arg[0] == '/') {//絕對路徑
         if (strcmp(token, "root") != 0) {
-            printf("錯誤的絕對路徑");
+            printf("Wrong absolute path");
             return;
         }
         temp_inode = get_inode(fs, 0);//root
         token = strtok(NULL, "/");//第二段路徑
         if (token == NULL) {
-            printf("不能刪除root");
+            printf("Cannot delete root");
             return;
         }  
     }
@@ -188,7 +188,7 @@ void rm(FileSystem* fs, Inode *inode, char* arg) {
     int file_index;
     while (token != NULL) {
         if (strcmp(token, ".") == 0 || strcmp(token, "..") == 0 ) {
-            printf("不可刪除自己或父路徑");
+            printf("Cannot delete parent path");
             return;
         }
         bool found_next_path = false;
@@ -253,12 +253,12 @@ void rm(FileSystem* fs, Inode *inode, char* arg) {
             }
         }
         if(!is_delete) {
-            printf("刪除失敗:父資料夾");
+            printf("Delete failed: parent path");
             return;
         }
         is_delete = free_inode(fs, temp_inode->inode_index);//釋放檔案inode
         if(!is_delete) {
-            printf("刪除失敗:檔案");
+            printf("Delete failed: file");
             return;
         }
     }
@@ -275,7 +275,7 @@ void my_mkdir(FileSystem* fs, Inode *inode, char* arg) {
     
     if (arg[0] == '/') {//絕對路徑
         if (strcmp(token, "root") != 0) {
-            printf("錯誤的絕對路徑");
+            printf("Wrong absolute path");
             return;
         }
         temp_inode = get_inode(fs, 0);//root
@@ -350,13 +350,13 @@ void my_rmdir(FileSystem* fs, Inode *inode, char* arg) {
     
     if (arg[0] == '/') {//絕對路徑
         if (strcmp(token, "root") != 0) {
-            printf("錯誤的絕對路徑");
+            printf("Wrong absolute path");
             return;
         }
         temp_inode = get_inode(fs, 0);//root
         token = strtok(NULL, "/");//第二段路徑
         if (token == NULL) {
-            printf("不能刪除root");
+            printf("Cannot delete root");
             return;
         }  
     }
@@ -366,7 +366,7 @@ void my_rmdir(FileSystem* fs, Inode *inode, char* arg) {
     bool keep_find = true;
     while (token != NULL) {
         if (strcmp(token, ".") == 0 || strcmp(token, "..") == 0 ) {
-            printf("不可刪除自己或父路徑");
+            printf("Cannot delete parent path");
             return;
         }
         bool found_next_path = false;
@@ -444,12 +444,12 @@ void my_rmdir(FileSystem* fs, Inode *inode, char* arg) {
             }
         }
         if(!is_delete) {
-            printf("刪除失敗:父資料夾");
+            printf("Delete failed: parent path");
             return;
         }
         is_delete = free_inode(fs, temp_inode->inode_index);//釋放子資料夾inode
         if(!is_delete) {
-            printf("刪除失敗:子資料夾");
+            printf("Delete failed: file");
             return;
         }
     }
@@ -462,19 +462,19 @@ void put(FileSystem* fs, Inode *inode, char *arg) {
     strcat(filePath, arg);
     struct stat buffer;
     if (stat(filePath, &buffer) != 0) {// 確認檔案存在
-        printf("檔案不存在:%s",filePath);
+        printf("File not exist:%s",filePath);
         return;
     }
     FILE *file = fopen(filePath, "rb");// 打開檔案
     if (!file) {
-        printf("檔案打不開");
+        printf("Could not open file.\n");
         return;
     }
     size_t fileSize = buffer.st_size;//取得檔案大小
     
     void *fileData = malloc(fileSize);
     if (!fileData) {
-        printf("Error: Memory allocation failed.\n");
+        printf("Memory allocation failed.\n");
         fclose(file);
         return;
     }
@@ -485,7 +485,7 @@ void put(FileSystem* fs, Inode *inode, char *arg) {
     new_inode = allocate_inode(fs, true);//新建inode
     new_inode->size = fileSize;
     if(!write_file_data(fs, new_inode, fileData, fileSize)) {
-        printf("寫入失敗");
+        printf("Failed to write file data.\n");
         return;
     }
     DirectoryEntry new_directory;//父資料夾指向新檔案
@@ -519,13 +519,13 @@ void get(FileSystem* fs, Inode *inode, char *arg) {
 
     if (arg[0] == '/') {//絕對路徑
         if (strcmp(token, "root") != 0) {
-            printf("錯誤的絕對路徑");
+            printf("Wrong absolute path");
             return;
         }
         temp_inode = get_inode(fs, 0);//root
         token = strtok(NULL, "/");//第二段路徑
         if (token == NULL) {
-            printf("缺少檔案名稱");
+            printf("Missing file name");
             return;
         }  
     }
@@ -535,7 +535,7 @@ void get(FileSystem* fs, Inode *inode, char *arg) {
     int file_index;
     while (token != NULL) {
         if (strcmp(token, ".") == 0 || strcmp(token, "..") == 0 ) {
-            printf("錯誤的路徑");
+            printf("Wrong path");
             return;
         }
         bool found_next_path = false;
@@ -580,11 +580,11 @@ void get(FileSystem* fs, Inode *inode, char *arg) {
     size_t file_size = file_inode->size; 
     void* buffer = malloc(file_size);
     if (!buffer) {
-        printf("開不了buffer\n");
+        printf("Buffer creation failed\n");
         return;
     }
     if (!read_file_data(fs, file_inode, buffer)) {
-        printf("讀取錯誤\n");
+        printf("Error reading file data\n");
         free(buffer);
         return;
     }
@@ -594,7 +594,7 @@ void get(FileSystem* fs, Inode *inode, char *arg) {
     strcat(filePath, file_name);
     FILE *outputFile = fopen(filePath, "wb");//打開目標檔案
     if (!outputFile) {
-        printf("開檔錯誤\n");
+        printf("Error opening output file\n");
         free(buffer);
         return;
     }
@@ -623,13 +623,13 @@ void cat(FileSystem* fs, Inode *inode, char *arg) {
 
     if (arg[0] == '/') {//絕對路徑
         if (strcmp(token, "root") != 0) {
-            printf("錯誤的絕對路徑");
+            printf("Wrong absolute path");
             return;
         }
         temp_inode = get_inode(fs, 0);//root
         token = strtok(NULL, "/");//第二段路徑
         if (token == NULL) {
-            printf("缺少檔案名稱");
+            printf("Missing file name");
             return;
         }  
     }
@@ -639,7 +639,7 @@ void cat(FileSystem* fs, Inode *inode, char *arg) {
     int file_index;
     while (token != NULL) {
         if (strcmp(token, ".") == 0 || strcmp(token, "..") == 0 ) {
-            printf("錯誤的路徑");
+            printf("Wrong path");
             return;
         }
         bool found_next_path = false;
@@ -684,11 +684,11 @@ void cat(FileSystem* fs, Inode *inode, char *arg) {
     size_t file_size = file_inode->size; 
     void* buffer = malloc(file_size);
     if (!buffer) {
-        printf("開不了buffer\n");
+        printf("Buffer creation failed\n");
         return;
     }
     if (!read_file_data(fs, file_inode, buffer)) {
-        printf("讀取錯誤\n");
+        printf("Reading file data failed\n");
         free(buffer);
         return;
     }
@@ -718,13 +718,13 @@ void my_create(FileSystem* fs, Inode *inode, char *arg) {
 
     if (arg[0] == '/') {//絕對路徑
         if (strcmp(token, "root") != 0) {
-            printf("錯誤的絕對路徑");
+            printf("Error absolute path");
             return;
         }
         temp_inode = get_inode(fs, 0);//root
         token = strtok(NULL, "/");//第二段路徑
         if (token == NULL) {
-            printf("缺少檔案名稱");
+            printf("Missing file name");
             return;
         }  
     }
@@ -734,7 +734,7 @@ void my_create(FileSystem* fs, Inode *inode, char *arg) {
     int file_index;
     while (token != NULL) {
         if (strcmp(token, ".") == 0 || strcmp(token, "..") == 0 ) {
-            printf("錯誤的路徑");
+            printf("Wrong path");
             return;
         }
         bool found_next_path = false;
@@ -777,7 +777,7 @@ void my_create(FileSystem* fs, Inode *inode, char *arg) {
         new_inode->size = 1;
         const char empty_string[] = " ";
         if(!write_file_data(fs, new_inode, empty_string, 1)) {
-            printf("寫入失敗");
+            printf("Failed to write file data.\n");
             return;
         }
         DirectoryEntry new_directory;//父資料夾指向新檔案
@@ -812,13 +812,13 @@ void edit(FileSystem* fs, Inode *inode, char *arg) {
 
     if (arg[0] == '/') {//絕對路徑
         if (strcmp(token, "root") != 0) {
-            printf("錯誤的絕對路徑");
+            printf("Wrong absolute path");
             return;
         }
         temp_inode = get_inode(fs, 0);//root
         token = strtok(NULL, "/");//第二段路徑
         if (token == NULL) {
-            printf("缺少檔案名稱");
+            printf("Missing file name");
             return;
         }  
     }
@@ -829,7 +829,7 @@ void edit(FileSystem* fs, Inode *inode, char *arg) {
     DirectoryEntry* edit_entry;
     while (token != NULL) {
         if (strcmp(token, ".") == 0 || strcmp(token, "..") == 0 ) {
-            printf("錯誤的路徑");
+            printf("Wrong path");
             return;
         }
         bool found_next_path = false;
@@ -875,11 +875,11 @@ void edit(FileSystem* fs, Inode *inode, char *arg) {
     size_t file_size = file_inode->size; 
     void* buffer = malloc(file_size);
     if (!buffer) {
-        printf("開不了buffer\n");
+        printf("Buffer creation failed\n");
         return;
     }
     if (!read_file_data(fs, file_inode, buffer)) {
-        printf("讀取錯誤\n");
+        printf("Reading file data failed\n");
         free(buffer);
         return;
     }
