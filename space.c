@@ -82,7 +82,6 @@ Inode* allocate_inode(FileSystem* fs, bool isFile) {
             for (int i = 0; i < BLOCK_NUMBER; i++) {
                 inode->directBlocks[i] = -1;
                 inode->indirectBlock[i] = -1;
-                inode->doubleIndirectBlock[i] = -1;
             }
 
             return inode;
@@ -287,7 +286,7 @@ bool free_data_block(FileSystem* fs, int block_index) {
 bool allocate_block_by_size_for_inode(FileSystem* fs, Inode* inode, size_t size) {
     // 1. 計算需要多少個 blocks
     int blocks_needed = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;  // 向上取整
-    
+    printf("blocks_needed: %d\n", blocks_needed);
     // 2. 檢查是否有足夠的空間
     int available_blocks = fs->super_block->total_blocks - fs->super_block->used_blocks;
     if (blocks_needed > available_blocks) {
@@ -339,20 +338,20 @@ bool write_file_data(FileSystem* fs, Inode* inode, const void* data, size_t size
     size_t remaining_size = size;
 
     // 1. 寫入 direct blocks
-    write_direct_block(fs, inode->directBlocks, &data_ptr, &remaining_size);
+    write_direct_block(fs, inode->directBlocks, &data_ptr, &remaining_size, BLOCK_NUMBER);
 
     // 2. 如果還有數據，寫入 indirect blocks
     if (remaining_size > 0) {
-        write_indirect_block(fs, inode->indirectBlock, &data_ptr, &remaining_size);
+        write_indirect_block(fs, inode->indirectBlock, &data_ptr, &remaining_size, BLOCK_NUMBER);
     }
 
     return (remaining_size == 0);  // 是否全部寫入完成
 }
 
-void write_direct_block(FileSystem* fs, int* directBlocks, const char** data_ptr, size_t* remaining_size) {
+void write_direct_block(FileSystem* fs, int* directBlocks, const char** data_ptr, size_t* remaining_size, int block_size) {
     int block_index = 0;
     
-    while (*remaining_size > 0 && block_index < BLOCK_NUMBER) {
+    while (*remaining_size > 0 && block_index < block_size) {
         if (directBlocks[block_index] != -1) {
             size_t write_size = (*remaining_size > BLOCK_SIZE) ? BLOCK_SIZE : *remaining_size;
             write_block(fs, directBlocks[block_index], *data_ptr, write_size);
@@ -363,15 +362,15 @@ void write_direct_block(FileSystem* fs, int* directBlocks, const char** data_ptr
     }
 }
 
-void write_indirect_block(FileSystem* fs, int* indirectBlock, const char** data_ptr, size_t* remaining_size) {
+void write_indirect_block(FileSystem* fs, int* indirectBlock, const char** data_ptr, size_t* remaining_size, int block_size) {
     int block_index = 0;
     
-    while (*remaining_size > 0 && block_index < BLOCK_NUMBER) {
+    while (*remaining_size > 0 && block_index < block_size) {
         if (indirectBlock[block_index] != -1) {
             // 取得這個 indirect block 指向的位置
             int* indirect_block_ptr = (int*)get_block_position(fs, indirectBlock[block_index]);
             // 用 write_direct_block 來寫入這個 indirect block 指向的數據
-            write_direct_block(fs, indirect_block_ptr, data_ptr, remaining_size);
+            write_direct_block(fs, indirect_block_ptr, data_ptr, remaining_size, BLOCK_SIZE/sizeof(int));
         }
         block_index++;
     }
@@ -391,20 +390,20 @@ size_t read_file_data(FileSystem* fs, Inode* inode, void* buffer) {
     size_t total_read = 0;
 
     // 1. 從 direct blocks 讀取
-    read_direct_block(fs, inode->directBlocks, &buf_ptr, &remaining_size, &total_read);
+    read_direct_block(fs, inode->directBlocks, &buf_ptr, &remaining_size, &total_read, BLOCK_NUMBER);
 
     // 2. 從 indirect blocks 讀取（如果還需要）
     if (remaining_size > 0) {
-        read_indirect_block(fs, inode->indirectBlock, &buf_ptr, &remaining_size, &total_read);
+        read_indirect_block(fs, inode->indirectBlock, &buf_ptr, &remaining_size, &total_read, BLOCK_NUMBER);
     }
 
     return total_read;
 }
 
-void read_direct_block(FileSystem* fs, int* directBlocks, char** buf_ptr, size_t* remaining_size, size_t* total_read) {
+void read_direct_block(FileSystem* fs, int* directBlocks, char** buf_ptr, size_t* remaining_size, size_t* total_read, int block_size) {
     int block_index = 0;
     
-    while (*remaining_size > 0 && block_index < BLOCK_NUMBER) {
+    while (*remaining_size > 0 && block_index < block_size) {
         if (directBlocks[block_index] != -1) {
             size_t read_size = (*remaining_size > BLOCK_SIZE) ? BLOCK_SIZE : *remaining_size;
             read_block(fs, directBlocks[block_index], *buf_ptr, read_size);
@@ -416,13 +415,13 @@ void read_direct_block(FileSystem* fs, int* directBlocks, char** buf_ptr, size_t
     }
 }
 
-void read_indirect_block(FileSystem* fs, int* indirectBlock, char** buf_ptr, size_t* remaining_size, size_t* total_read) {
+void read_indirect_block(FileSystem* fs, int* indirectBlock, char** buf_ptr, size_t* remaining_size, size_t* total_read, int block_size) {
     int block_index = 0;
     
-    while (*remaining_size > 0 && block_index < BLOCK_NUMBER) {
+    while (*remaining_size > 0 && block_index < block_size) {
         if (indirectBlock[block_index] != -1) {
             int* indirect_block_ptr = (int*)get_block_position(fs, indirectBlock[block_index]);
-            read_direct_block(fs, indirect_block_ptr, buf_ptr, remaining_size, total_read);
+            read_direct_block(fs, indirect_block_ptr, buf_ptr, remaining_size, total_read, BLOCK_SIZE/sizeof(int));
         }
         block_index++;
     }

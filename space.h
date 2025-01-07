@@ -72,11 +72,11 @@ bool write_file_data(FileSystem* fs, Inode* inode, const void* data, size_t size
 
 // private
 // 寫入direct block
-void write_direct_block(FileSystem* fs, int* directBlocks, const char** data_ptr, size_t* remaining_size);
+void write_direct_block(FileSystem* fs, int* directBlocks, const char** data_ptr, size_t* remaining_size, int block_size);
 
 // private
 // 寫入indirect block
-void write_indirect_block(FileSystem* fs, int* indirectBlock, const char** data_ptr, size_t* remaining_size);
+void write_indirect_block(FileSystem* fs, int* indirectBlock, const char** data_ptr, size_t* remaining_size, int block_size);
 
 // private
 // 讀取指定data block的資料
@@ -87,11 +87,11 @@ size_t read_file_data(FileSystem* fs, Inode* inode, void* buffer);
 
 // private
 // 讀取direct block
-void read_direct_block(FileSystem* fs, int* directBlocks, char** buf_ptr, size_t* remaining_size, size_t* total_read);
+void read_direct_block(FileSystem* fs, int* directBlocks, char** buf_ptr, size_t* remaining_size, size_t* total_read, int block_size);
 
 // private
 // 讀取indirect block
-void read_indirect_block(FileSystem* fs, int* indirectBlock, char** buf_ptr, size_t* remaining_size, size_t* total_read);
+void read_indirect_block(FileSystem* fs, int* indirectBlock, char** buf_ptr, size_t* remaining_size, size_t* total_read, int block_size);
 
 // 設定系統指標
 FileSystem* load_filesystem(unsigned char* data);
