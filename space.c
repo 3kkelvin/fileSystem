@@ -268,12 +268,8 @@ bool free_inode(FileSystem* fs, int inode_index) {
 }
 
 bool free_data_block(FileSystem* fs, int block_index) {
-    printf("Debug: free block %d\n", block_index);
-    
     // 1. 檢查參數有效性
     if (block_index < 0 || block_index >= (fs->super_block->total_blocks - fs->super_block->system_blocks)) {
-        printf("Debug: block_index wrong: %d\n", block_index);
-        printf("Debug: block range should be 0 to %d\n", fs->super_block->total_blocks - fs->super_block->system_blocks - 1);
         return false;
     }
 
@@ -283,14 +279,12 @@ bool free_data_block(FileSystem* fs, int block_index) {
 
     // 3. 檢查這個 block 是否已經是空閒的
     if (!(fs->data_bitmap[byte_index] & (1 << bit_index))) {
-        printf("Debug: block %d is unuse\n", block_index);
         return false;
     }
     
     // 4. 在 bitmap 中標記為未使用
     fs->data_bitmap[byte_index] &= ~(1 << bit_index);
     fs->super_block->used_blocks--;
-    printf("Debug: Successfully remove block %d\n", block_index);
 
     return true;
 }
