@@ -70,6 +70,9 @@ Inode* allocate_inode(FileSystem* fs, bool isFile) {
             // 2. 標記該 inode 為已使用
             fs->inode_bitmap[byte] |= (1 << bit);
             fs->super_block->used_inodes++;
+            if (!isFile) {
+                fs->super_block->folder_inodes++;
+            }
 
             // 3. 初始化該 inode
             Inode* inode = &fs->inode_table[i];
@@ -257,13 +260,20 @@ bool free_inode(FileSystem* fs, int inode_index) {
     int bit_index = inode_index % 8;
     fs->inode_bitmap[byte_index] &= ~(1 << bit_index);
     fs->super_block->used_inodes--;
+    if(!inode->isFile) {
+        fs->super_block->folder_inodes--;
+    }
 
     return true;
 }
 
 bool free_data_block(FileSystem* fs, int block_index) {
+    printf("Debug: free block %d\n", block_index);
+    
     // 1. 檢查參數有效性
     if (block_index < 0 || block_index >= (fs->super_block->total_blocks - fs->super_block->system_blocks)) {
+        printf("Debug: block_index wrong: %d\n", block_index);
+        printf("Debug: block range should be 0 to %d\n", fs->super_block->total_blocks - fs->super_block->system_blocks - 1);
         return false;
     }
 
@@ -273,12 +283,14 @@ bool free_data_block(FileSystem* fs, int block_index) {
 
     // 3. 檢查這個 block 是否已經是空閒的
     if (!(fs->data_bitmap[byte_index] & (1 << bit_index))) {
-        return false;  // 已經是空閒的，不需要釋放
+        printf("Debug: block %d is unuse\n", block_index);
+        return false;
     }
     
     // 4. 在 bitmap 中標記為未使用
     fs->data_bitmap[byte_index] &= ~(1 << bit_index);
     fs->super_block->used_blocks--;
+    printf("Debug: Successfully remove block %d\n", block_index);
 
     return true;
 }
@@ -286,7 +298,7 @@ bool free_data_block(FileSystem* fs, int block_index) {
 bool allocate_block_by_size_for_inode(FileSystem* fs, Inode* inode, size_t size) {
     // 1. 計算需要多少個 blocks
     int blocks_needed = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;  // 向上取整
-    printf("blocks_needed: %d\n", blocks_needed);
+
     // 2. 檢查是否有足夠的空間
     int available_blocks = fs->super_block->total_blocks - fs->super_block->used_blocks;
     if (blocks_needed > available_blocks) {

@@ -30,6 +30,7 @@ typedef struct SuperBlock{
     int system_blocks;  // 系統區域占用的block數（固定，包含SuperBlock、bitmaps、inode table）
     int total_inodes;   // 總Inode數量
     int used_inodes;    // 已使用Inode數量
+    int folder_inodes;  // 資料夾Inode數量
     int used_blocks;    // 已使用block數量
     int block_size;     // block大小
     char password[10];  // 密碼
