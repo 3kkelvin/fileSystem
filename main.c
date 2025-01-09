@@ -62,12 +62,9 @@ int Interaction(FileSystem *file_system) {
             printf("Error reading input\n");//沒東西
             continue;
         }
-        //printf("input:%s\n",input);//todo:刪掉
         input[strcspn(input, "\n")] = '\0';//去掉輸入末尾的換行符    
         char *command = strtok(input, " ");//分割命令和參數
         char *arg = strtok(NULL, " ");
-        //printf("command:%s\n",command);//todo:刪掉
-        //printf("arg:%s\n",arg);//todo:刪掉
         int command_code = get_command_code(command);
 
         switch (command_code) {
@@ -109,15 +106,18 @@ int Interaction(FileSystem *file_system) {
                     break;
                 }
                 cat(file_system, current_path, arg);
-                //檢查current_path的Directory 如果有找到print出內容
                 break;
-            case CMD_CREATE://要考慮絕對路徑?
+            case CMD_CREATE:
+                if (arg == NULL) {//沒檔案
+                    break;
+                }
                 my_create(file_system, current_path, arg);
-                //檢查current_path的Directory 如果有找到 調用珞昱的方法
                 break;
-            case CMD_EDIT://要考慮絕對路徑?
+            case CMD_EDIT:
+                if (arg == NULL) {//沒檔案
+                    break;
+                }
                 edit(file_system, current_path, arg);
-                //檢查current_path的Directory 如果有找到 調用珞昱的方法
                 break;
             case CMD_STATUS://列出當前fs資訊
                 status(file_system->super_block);
@@ -125,7 +125,7 @@ int Interaction(FileSystem *file_system) {
             case CMD_HELP:
                 print_command();//重新print出能用的指令
                 break;
-            case CMD_EXIT: { //存檔
+            case CMD_EXIT: {//存檔
                 bool result;
                 result = create_dump(file_system);
                 if (!result) {

@@ -73,7 +73,9 @@ void read_directory_entries(FileSystem* fs, int block_index) {
         } 
         if (entry->inode_index > -1)
         {
-            printf("%s ", entry->filename);//輸出檔案名 todo:屏蔽. ..
+            if(strcmp(entry->filename, ".") != 0 && strcmp(entry->filename, "..") != 0) {
+                printf("%s ", entry->filename);
+            }
         }
         offset += DirectoryEntrySize;//不為空 指向下一組
     }
@@ -256,7 +258,7 @@ void rm(FileSystem* fs, Inode *inode, char* arg) {
             printf("Delete failed: parent path");
             return;
         }
-        is_delete = free_inode(fs, temp_inode->inode_index);//釋放檔案inode
+        is_delete = free_inode(fs, file_inode->inode_index);//釋放檔案inode
         if(!is_delete) {
             printf("Delete failed: file");
             return;
